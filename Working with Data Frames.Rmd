@@ -1,0 +1,206 @@
+---
+title: "Working with Data Frames in R"
+author: "Name"
+date: "January 21, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Data Frames
+A *data frame* is R's most natural way of presenting a data set with a collection of recorded observations for one or more variables. They have no restriction on the data types of the variables; you can store numeric data, factor data, and more. Let's look at how to create data frames and learn about their general characteristics.
+
+### Construction of Data Frames
+
+To create one, we use the `data.frame` function. We supply the data, grouped by variable, as vectors of the same length. 
+
+```{r echo = T}
+mydf <- data.frame(person = c("Peter","Lois","Meg","Chris","Stewie"),
+                   age = c(42, 40, 17, 14, 1),
+                   sex = factor(c("M","F","F","M","M")))
+mydf
+```
+
+We've constructed a data frame with the first name, age in years, and sex of five individuals. The returned object makes it clear why vectors passted to `data.frame` must be of equal length: different lengths wouldn't make sense here. Try making a data frame where the age vector is only of length 2 or 3, see what happens. 
+
+Each row of a data frame is called an *observation* or *record* and each column is a *variable*. You can extract portions of the data by specifying row and column index positions (like a matrix). 
+
+```{r}
+mydf[1,2]
+```
+
+This gives you the element at row 1, column 2, the age of Peter. Now let's extract the third, fourth, and fith elements of the third column:
+
+```{r}
+
+```
+
+This returns a factor vector with the sex of Meg, Chris, and Stewie. We can also extract entire columns in specific orders:
+
+```{r}
+mydf[,c(3,1)]
+```
+
+This resulted in another data frame giving what?
+
+You can also use the names of the vectors that were passed to `data.frame` to access variables even if you don't know their column index positions, which is very useful for large data sets. We use the dollar operator for this. 
+
+```{r}
+mydf$age
+```
+
+You can subset this returned vector, too:
+
+```{r}
+mydf$age[1]
+```
+
+This returns the same thing as `mydf[1,2]`.
+
+You can report the size of a data frame: the number of records and variables. 
+
+```{r}
+nrow(mydf)
+
+ncol(mydf)
+
+dim(mydf)
+```
+
+A convenient way to summarize all this information is with the `str` function:
+
+```{r}
+str(mydf)
+```
+
+
+
+We can look at the class of each vector in the data frame:
+
+```{r}
+mydf$person
+class(mydf$person)
+```
+
+You can see that `mydf$sex` is a factor variable. You can find the levels of a factor by using the `levels` function.
+
+```{r}
+mydf$sex
+class(mydf$sex)
+```
+
+```{r}
+levels(mydf$sex)
+```
+
+### Adding Data Columns and Combining Data Frames
+
+Say you want to add data to an existing data frame. This could be a new variable (a whole column) or amending more rectors (adding rows). We can use the `rbind` and `cbind` functions to append rows and columns, respectively. For example, le'ts add another record to `mydf`: the age and sex of Brian. The first step is to create a new data frame that contains Brian's information. 
+
+```{r}
+newrecord <- data.frame(person = "Brian", age = 7,
+                        sex = factor("M"))
+newrecord
+```
+
+TO avoid any confusion, it's important to make sure the variable names and the data types match the data frame you're planning to add this to. Now let's add the record to `mydf`.
+
+```{r}
+mydf <- rbind(mydf, newrecord)
+mydf
+```
+
+Adding a variable to a data frame is also pretty straightforward. Let's say we now have data on the classification of how funny these six individuals are, defined as a "degree of funniness". It can take three possible values: `Low`, `Med`, and `High`. We can make this a factor vector like this:
+
+```{r}
+funny <- c("High", "High", "Low","Med", "High","Med")
+funny <- factor(x = funny, levels = c("Low","Med","High"))
+funny
+```
+
+The first line creates the basic character vector as `funny`, and the second line overwrites `funny` by turning it into a factor. The order of these elements must correspond to the records in your data frame. Now, you can simply use `cbind` to append this factor as a column to the exisiting `mydf`. Do so:
+
+```{r}
+
+```
+
+You can also use the `$` operator extend a data frame. Let's say we want to add a colum with the age of the individuals in months, not years, calling this new variable `age.mon`:
+
+```{r}
+
+```
+
+### Logical Record Subsets
+
+Often we will may desire to examine a subset of entries that meet certain criteria in our data set. For example, when working with data from a clinical drug trial, a researcher might want to examine the results for just female participants and compare them to the results for males. Or the researcher might want to look for the characteristics of individuals who responded most positively to the drug. 
+
+Suppose we want to examine all records corresponding to males in `mydf`. The following line will identify the relevant positions in the `sex` factor vector:
+
+```{r}
+mydf$sex=="M"
+```
+
+This flags the male records. You can use this with the subset notation `[]` to get the male-only subset:
+
+```{r}
+mydf[mydf$sex=="M",]
+```
+
+This returns data for all variables for only the male participants. You can use the same behavior to pick and choose which variables to return in the subset. For example, since we know we have selected males only, we could omit `sex` from the result using a negative numeric index in the column dimension:
+
+```{r}
+mydf[mydf$sex=="M",-3]
+```
+
+If you don't have the column numer or want to have more control over the returned columns, you can use a character vector of variable names instead.
+
+```{r}
+mydf[mydf$sex=="M", c("person","age")]
+```
+
+The logical conditions you use to subset a data frame can be as simple or as complicated as you need them to be. The logical flag vector you place in the square brackets just has to match the number of records in the data frame. Let's extract from `mydf` the full records for individuals who are more than 10 years old.
+
+```{r}
+mydf[mydf$age>10,]
+```
+
+We use the logical OR too. Extract the full records for individuals who are more than 10 years old OR have a high degree of funniness:
+
+```{r}
+
+```
+
+Whelp, we've learned how to work with data frames! In the next lesson we'll learn even more efficient ways to work with data frames and subsets with the `tidyverse`!
+
+## Exercises
+
+* Look at the help file for the `mtcars` dataset. What is the data about?
+
+* Look at the structure of the `mtcars` data frame. How many observations are there? Variables? What do they represent?
+
+* Use the `summary` command on the `mtcars` data frame. What is being output?
+
+* Are all the variables truly numeric? Print the `cyl` variable. Then use the `unique` command on the `cyl` variable. What does this tell you?
+
+* Change the `cyl` variable to a factor. Check the levels of `cyl` after.
+
+* Get the subset of `mtcars` that contains 4 cylinder engines. 
+
+* Get subset of `mtcars` that contains 4 cylinder engines and whose weight is less than 2,000 pounds.
+
+* Store the subset of `mtcars` that contains 4 cylinder engines as a new data frame named `four_cyl`. Then plot the MPG versus Weight with the following command: `plot(four_cyl$mpg~four_cyl$wt, cex = 1.3, col = "blue", pch = 16, xlab = "Weight (1000 lbs)", ylab = "Miles Per Gallon (Fuel Economy)")`
+
+## References
+
+* *The Book of R: A First Course in Programming and Statistics* , Tilman Davies. No Starch Press, Inc. 2016.
+
+* [Graphing with Base R](https://www.statmethods.net/advgraphs/axes.html)
+

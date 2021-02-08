@@ -1,0 +1,30 @@
+---
+title: "Assignment 1"
+author: "Thomas Robacker"
+date: "January 19, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercises (Assignment 1)
+
+In your own R Markdown file (you can modify this one), I would like you to complete the following exercises. You must show all of your code and output. Please submit your HTML output file only. If you need help, we can look at your code together online via Google Meet.
+
+1. Create and store a sequence of values from 1 to 50 that progresses in steps of 0.5.
+
+2. Overwrite the object from number 1 with the same sequence with the order reversed. 
+
+3. Create a vector labeled `my.vec` that contains the numbers 3,1,10,24,31,70, and 110. Using the `sum`, `length`, and `sort` commands compute the sum, the length, and sort the vector my.vec in increasing and decreasing order.
+
+4.	Use the `sum` and `length` functions to calculate the mean of `my.vec` then use the `mean` function to compute the mean. Can you figure out how to find the median, standard deviation, and variance? Show me (Use the internet!)
+
+5. Once you've found the median, standard deviation, and variance of `my.vec`, tell me what those represent. That is, interpret what each of those values means about `my.vec`.
+
+6. The conversion from a temperature measurement in degrees Fahrenheit *F* to Celsius *C* is performed using the following equation:
+\[
+C=\frac{5}{9}(F-32)
+\]
+Use vector-oriented behavior to convert the temperatures 45, 77, 20, 19, 101, 120, and 212 in degrees Fahrenheit to degrees Celsius.

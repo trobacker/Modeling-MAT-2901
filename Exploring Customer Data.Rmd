@@ -1,0 +1,257 @@
+---
+title: "Customer Data EDA"
+author: "T. Robacker"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(scales)
+# Install package: WVPlots and hexbin
+library(WVPlots)
+library(hexbin)
+```
+
+## Exploring Customer Data
+
+We're going to look at some customer information data with the following goal in mind. Suppose we want to build a model to predict which of our customers don't have health insurance. We have data on individuals whose insurance status we know. We've also identified some customer properties that we believe may help predict the probability of insurance coverage: age, employment status, income, info about residence and vehicles, and so on. 
+
+It's tempting to dive right into the modeling step without looking intently at the dataset first, especially when we have a lot of data. Resist the temptation. No dataset is perfect. If you don't take the time to examine the data before you start to model, you may find yourself redoing work repeatedly as we discover bad data fields/variables. GET TO KNOW YOUR DATA.
+
+```{r}
+customer_data <- read.delim("C:/Users/trobacker/Desktop/custdata.tsv", stringsAsFactors=TRUE)
+```
+
+
+Let's look at the structure of the data set:
+
+```{r}
+glimpse(customer_data)
+unique(customer_data$housing.type)
+```
+
+Let's use `summary()` to try and spot any problems we may have with our data. The goal is to understand whether you have the kind of customer information can potentially help you predict health insurance coverage, and whether the data is of good enough quality to be informative. 
+
+```{r}
+summary(customer_data)
+```
+
+The variable `is.employed` is missing for about a third of the data. The variable `income` has negative values which are potentially invalid. About 85% of the customers have health insurance. We're missing 56 values for the `housing.type`,`recent.move`, and `num.vehicles` variables. 
+
+At this stage, we're looking for several common issues:
+
+* Missing values
+* Invalid values and outliers
+* Data ranges that are too wide or too narrow
+* The units of the data
+
+```{r}
+summary(customer_data$is.employed)
+```
+
+We're missing more than a third of the data for `is.employed`. Why? Is employment status unknown? Did the company start collecting employment data only recently? Does `NA` mean "not in the active workforce" (e.g. students)? Should we drop the rows that have missing values?
+
+```{r}
+summary(customer_data$income)
+summary(customer_data$age)
+```
+
+We have neagtive values for income, why? Should we drop them? We have a large range in income, essentially 0 to over half a million dollars.
+
+We have customer ages of age zero and 146.7! Zero might mean "age unknown" or "refuse to state". 
+
+Let's visually investigate our data too. We can visually check distributions for single variables with several graphs:
+
+* Histograms
+
+* Density Plots
+
+* Bar charts
+
+* Dot plots
+
+The visualizations can help us answer questions like these:
+
+* What is the peak value of the distribution?
+
+* How many peaks are there in the distribution (unimodality versus bimodality)?
+
+* How normal (or lognormal) is the data?
+
+* How much does the data vary? Is it concentrated in a certain interval or in a certain category?
+
+```{r}
+summary(customer_data$age)
+
+ggplot(customer_data, aes(x = age)) +
+  geom_density(fill = 'grey')
+```
+
+The distribution of age seems to be symmetric and somewhat normally distributed, especially considering the potential outliers.
+
+```{r}
+ggplot(customer_data, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "gray", color = 'black')
+```
+
+```{r}
+# density plot/histogram  of income
+# Describe what you find!
+# Try a log scale
+ggplot(customer_data, aes(x = income)) + 
+  geom_histogram(fill = "darkgray", color = 'black', binwidth = 10000) + 
+  labs(title = "Histogram of Income", x = "Income ($)",
+       y = "Frequency")
+
+customer_data_pincome <- customer_data %>%
+  filter(income > 0)
+
+ggplot(customer_data_pincome, aes(x = income)) + 
+  geom_histogram(fill = "darkgray", color = 'black') + 
+  labs(title = "Histogram of Income", x = "Income ($)",
+       y = "Frequency") + 
+  scale_x_log10()
+
+ggplot(customer_data, aes(x = income)) + 
+  geom_density(fill = "darkgrey") + 
+  labs(x = "Income ($)", y = "Density", title = "Density Plot of Income")
+
+```
+
+```{r}
+# Bar plot of marital status
+ggplot(customer_data, aes(x = marital.stat)) +
+  geom_bar(fill = 'gray', color = "black") + 
+  labs( title = "Barplot of Marital Status")
+```
+
+```{r}
+# Bar plot of marital status horizontal
+ggplot(customer_data, aes(x = marital.stat)) +
+  geom_bar(fill = 'gray', color = 'black') + 
+  coord_flip()
+```
+
+
+
+
+```{r}
+#Make a bar plot of state.of.res
+ggplot(customer_data, aes(x = state.of.res)) + 
+  geom_bar(fill = 'darkgray', color = 'black') + 
+  coord_flip()
+
+# Dot plot of state.of.res
+ClevelandDotPlot(customer_data, "state.of.res", 
+                 sort = 1, title = "Customers by state") + coord_flip()
+```
+
+In addition to examining variables in isolation, we often want to look at the relationship between two variables. For example, we might want to answer questions like these:
+
+* Is there a relationship between the two inputs age and income in my data?
+
+* If so, what kind of relationship and how strong?
+
+* Is there a relationship between the input marital status and the output health insurance? How strong?
+
+First, let's look at some continuous variables. 
+
+```{r}
+#All people
+ggplot(customer_data, aes(x = age, y = income)) + 
+  geom_point() + 
+  labs(title = "Income as a function of age")
+
+#Consider a subset with reasonable age and income values
+customer_data2 <- customer_data %>% 
+  filter(age > 0 & age < 100, income > 0 & income < 200000)
+
+
+ggplot(customer_data2, aes(x = age, y = income)) + 
+  geom_point() + 
+  labs(title = "Income as a function of age")
+```
+
+Let's consider the overall trend:
+
+```{r}
+ggplot(customer_data2, aes(x = age, y = income)) + 
+  geom_point() + 
+  geom_smooth() +
+  labs(title = "Income as a function of age")
+```
+
+Describe what you see above. 
+
+
+```{r}
+HexBinPlot(customer_data2, "age", "income", "income as a function of age") + geom_smooth(color = "black", se=F)
+```
+
+
+
+The variable `health.ins` has a logical value. A scatterplot of the data may not seem informative, but a smoothing curve can estimate the average value of the T/F variable as a function of age. This is a logistic regression which we'll learn later on. 
+
+```{r}
+BinaryYScatterPlot(customer_data, "age", "health.ins",
+                   title = "Probability of health insurance by age")
+```
+
+Let's examine the relationship between marital status and the probability of health insurance coverage. The most straightforward way to visualize this is with a stacked bar chart.
+
+
+```{r}
+ggplot(customer_data, aes(x=marital.stat, fill =health.ins)) + 
+  geom_bar()
+```
+
+This chart makes it easy to compare the total number of people in each marital category, and to compare the number of uninsured people in each marital category. However, we can't directly compare the number of insured people in each category, because teh bars don't all start at the same level. So we might prefer a side-by-side bar plot of both insured and uninsured across categories - but not the total number of people in each category.
+
+```{r}
+ggplot(customer_data, aes(x=marital.stat, fill =health.ins)) + 
+  geom_bar(position = 'dodge')
+```
+
+If you want to compare the number of insured and unisured people across categories, while keeping a sense of the total number of people in each category, one plot to try is what we call a shadow plot. It creates two graphs, one for the insured population and one for the uninsured population. Both graphs are superimposed against a "shadow graph" of the total population. This allows comparison both across and within marital status categories. 
+
+```{r}
+ShadowPlot(customer_data, "marital.stat","health.ins",
+           title = "Health insurance status by marital status")
+```
+
+The main shortcoming of the previous charts is that one can't easily compare teh ratios of insured to uninsured across categories, especially for rare categories like widowed. Let's make a filled bar chart to visualize the ratios directly.
+
+```{r}
+ggplot(customer_data, aes(x=marital.stat, fill =health.ins)) + 
+  geom_bar(position = 'fill')
+```
+
+In the above charts, we've had one of the variables being binary. We apply the same plots to two variables that each have several categories, but the results can be harder to interpret. Let's look at the distribution of marriage status across housing types. 
+
+```{r}
+cdata <- customer_data %>% 
+  filter(!is.na(housing.type))
+
+ggplot(cdata, aes(x = housing.type, fill = marital.stat)) + geom_bar(position = 'dodge') +
+  scale_fill_brewer(palette = "Dark2") + 
+  coord_flip()
+```
+
+Let's facet wrap the housing type instead:
+```{r}
+ggplot(cdata, aes(x = marital.stat)) + 
+  geom_bar(fill = "darkgray") +
+  facet_wrap(~ housing.type, scale = "free_x") +
+  coord_flip()
+```
+
+```{r}
+ggplot(customer_data2, aes(x=age)) + 
+  geom_density() + facet_wrap(~ marital.stat)
+```
+
+
+## References & Notes
+
+* *Practical Data Science with R*, Nina Zumel and John Mount. Second Edition. Manning publications.

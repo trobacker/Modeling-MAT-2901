@@ -1,0 +1,44 @@
+---
+title: "Assignment 3"
+author: "Your Name"
+date: "Due January 28 by midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 3 Exercises
+
+```{r}
+library(tidyverse)
+```
+
+
+We'll use the `iris` dataset in R for the following exercises.
+
+1. Google what iris's are and how they look; try to understand what petal and sepal lengths/widths are. Using `ggplot`, plot the sepal length verse sepal width in one plot and the petal length and petal width in another plot.
+
+2. Is there an association in either graph? Desribe them. 
+
+3. Filter the `iris` data for the species `virginica` and have it output to the screen. 
+
+4. Filter for the species `virginica` again and then arrange in descending order of sepal length. 
+
+5. The measurements for the iris data are in centimeters. Use the `mutate` verb to create a new column called `slmm`containing the sepal length in millimeters. (Multiply by 10) Repeat this for each of the four original measurements with appropriate column titles. 
+
+```{r}
+iris_mod <- iris %>% mutate(slmm = Sepal.Length*10,
+                            swmm = Sepal.Width*10,
+                            plmm = Petal.Length*10,
+                            pwmm = Petal.Width*10)
+
+hist(iris_mod$slmm, col = "light green")
+```
+
+
+
+6. Plot sepal length verse sepal width in one plot and the petal length and petal width in another plot for the millimeter measurements (similar to #1). Do the relationships change after this unit conversion?
+
+

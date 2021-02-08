@@ -1,0 +1,75 @@
+---
+title: "Student Performance HW for 2/4"
+author: "Your Name"
+date: "February 2, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Exploring Student Performance Data
+
+First, get the Students Performance data imported to R. You can see the command I used in class on 2/2 below (it likely won't work on your computer so it's commented out):
+
+```{r}
+StudentsPerformance <- read.csv("C:/Users/AcerPC/Desktop/StudentsPerformance.csv", stringsAsFactors=TRUE)
+```
+
+1. Create a histogram for each quantitative variable in the data set. 
+
+```{r}
+
+```
+
+2. Create a scatter plot for math versus writing scores, math versus reading scores, and writing versus reading scores. Describe what you see. 
+
+```{r}
+
+```
+
+3. Using `dplyr` verbs, filter for male and female students separately (two data frames) and create histogram for their exam scores. You could also group them and put their scores on the same plot. Experiment a little!
+
+```{r}
+students_male <- StudentsPerformance %>%
+  filter(gender == "male")
+
+students_female <- StudentsPerformance %>%
+  filter(gender == "female")
+
+p1 <- ggplot(students_male, aes(x = math.score)) + geom_histogram(fill = "light blue", color = "dark grey")
+p1
+
+p2 <- ggplot(students_female, aes(x = math.score)) + geom_histogram(fill = "light pink", color = "dark grey")
+p2
+
+```
+
+
+4. Reusing your scatterplots from number 2, add a categorical variable as the color. Describe your plots and anything new you might see. 
+
+```{r}
+ggplot(StudentsPerformance, aes(x = reading.score, y = math.score, 
+                                color = test.preparation.course)) + 
+  geom_point() + 
+  labs(title = "Scatterplot of Math vs Reading scores by Test Prep",
+       x = "Reading Score", y = "Math Score")
+```
+
+
+5. For your graphs in number 4, use `facet_wrap()` to make your color variable into subplots instead.
+
+```{r}
+ggplot(StudentsPerformance, aes(x = reading.score, y = math.score, )) + 
+  geom_point() + 
+  labs(title = "Scatterplot of Math vs Reading scores by Test Prep",
+       x = "Reading Score", y = "Math Score") + 
+  facet_wrap(~ gender)
+
+```
+
+
+
+

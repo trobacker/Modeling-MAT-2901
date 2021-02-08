@@ -1,0 +1,71 @@
+---
+title: "Assignment 2"
+author: "Your Name"
+date: "Due January 26 by midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Assignment 2 Exercises
+
+### Part 1
+
+1 Look at the help file for the `mtcars` dataset. What is the data about?
+
+2 Look at the structure of the `mtcars` data frame. How many observations are there? Variables? What do they represent?
+
+3 Use the `summary` command on the `mtcars` data frame. What is being output?
+
+4 Are all the variables truly numeric? Print the `cyl` variable. Then use the `unique` command on the `cyl` variable. What does this tell you?
+
+5 Change the `cyl` variable to a factor. Check the levels of `cyl` after.
+
+6 Get the subset of `mtcars` that contains 4 cylinder engines. 
+
+7 Get subset of `mtcars` that contains 4 cylinder engines and whose weight is less than 2,000 pounds.
+
+8 Store the subset of `mtcars` that contains 4 cylinder engines as a new data frame named `four_cyl`. Then plot the MPG versus Weight with the following command:
+
+```{r}
+#plot(four_cyl$mpg~four_cyl$wt, cex = 1.3, col = "blue", pch = 16, xlab = "Weight (1000 lbs)",ylab = "Miles Per Gallon (Fuel Economy)")
+```
+
+### Part 2
+
+9. Look at the structure and help file of the `iris` dataset that's built-in with R. 
+
+```{r}
+iris
+```
+
+
+10. What are the variables? How many observations? Plot a histogram of each variable except `species` using the `hist` command,it doesn't have to be fancy. Here's an example: `hist(x, col='red', xlab = "Variable")`. Remember, a histogram plots the frequency of observations in the bin range along the x-axis.
+
+11. Now, use your ability to subset a data frame and make a new data frame for each species. 
+
+```{r}
+iris_setosa <- iris %>%   
+  filter(Species == "setosa") %>%  
+  arrange(Sepal.Length)
+
+iris_setosa
+```
+
+
+
+12. Next plot a histogram of the sepal length and width for each species. 
+
+13. What's the difference between your histograms in number 12 and number 10?
+
+14. Finally, look at the structure and help file for `iris3`. What's the difference between the `iris` data frame and the `iris3` data frame?
+
+
+

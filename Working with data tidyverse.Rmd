@@ -1,0 +1,710 @@
+---
+title: 'Working with Data: The Tidyverse'
+author: "MAT 2901 Mathematical and Statistical Modeling - T. Robacker"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In this section, we'll work with the R Programming language focusing on a powerful set of tools known as the Tidyverse. We'll learn the intertwined processes of data manipulation and visualizatonusing the tools `dplyr` and `ggplot2`. We'll manipulate data by filtering, sorting, and summarizing a dataset and then turn this processed data into informative visualizations. 
+
+First, we'll need to load some packages. You'll likely need to install some of these packages unless you've work with them before. The first package we'll load is `gapminder` which contains a dataset we're going to work with. To install these packages you can use R Studio's interactive features (shown in class) or you can use the R Console and type the following: `install.packages('gapminder')`. We'll load the `dplyr` package too. The following command loads the packages into your R session:
+
+```{r, message = F, fig.align='center'}
+library(gapminder)
+library(tidyverse)
+```
+
+Let's take a glance at the Gapminder dataset:
+
+```{r echo = T, fig.align='center'}
+gapminder
+```
+
+We are working with an excerpt of the data available at Gapminder.org. For each of 142 countries, the package provides values for life expectancy, GDP per capita, and population, every five years, from 1952 to 2007. Now that you have a glimpse of the Gapminder dataset, let's answer some fundamental questions:
+
+* How many observations (rows) are in the dataset? 
+
+```{r}
+glimpse(gapminder)
+```
+
+
+* What are the variables? 
+* What type of data is each variable? 
+
+## The Filter Verb
+
+The `dply` packages has many 'verbs' to use for data manipulation. The first one we'll use is `filter()`. This verb let's us filter for a subset of our dataset. For example, we might want the Gapminder data for a specific year such as 2007. Let's do it:
+
+```{r echo = T, fig.align='center'}
+gapminder %>% 
+  filter(year == 2007)
+```
+
+You can also use filter to set two conditions, which could retrieve a single observation. Let's filter for China in 2002:
+```{r echo = T, fig.align='center'}
+gapminder %>% 
+  filter(country == "China", year == 2002)
+```
+
+## The Arrange Verb
+
+`arrange()` sorts observations in a dataset in ascending or descending order based on a variable. We can arrange from
+
+```{r}
+gapminder %>%
+  arrange(gdpPercap)
+```
+
+To do descending order:
+```{r}
+gapminder %>%
+  arrange(desc(gdpPercap))
+```
+
+We can combine our verbs too! Let's arrange by GDP Per Capita for the year 2007:
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  arrange(desc(gdpPercap))
+```
+
+Let's practice:
+
+* Sort Gapminder in ascending order of life expectancy.
+
+```{r}
+gapminder %>% arrange(lifeExp)
+```
+
+
+* Sort Gapminder in descending order of life expectancy.
+
+```{r}
+gapminder %>%
+  arrange(desc(lifeExp))
+```
+
+
+* Filter for the year 1957, then arrange in descending order of population.
+
+```{r}
+gapminder %>%
+  filter(year == 1957) %>%
+  arrange(desc(pop))
+```
+
+
+## The Mutate Verb
+
+The `mutate` verb changes or adds variable. We can change existing variables easily, here's an example:
+```{r}
+gapminder %>%
+  mutate(pop = pop / 1000000)
+```
+
+
+```{r, include=F}
+# This is to reset the dataset and is not seen in the markdown output.
+library(gapminder)
+```
+
+We can also add a new variable. We might want to know the total GDP which is the GDP Per Capita times the population size. 
+
+```{r}
+gapminder %>%
+  mutate(gdp = gdpPercap * pop)
+```
+
+Notice that there's a new column called `gdp`. 
+
+We can combine all the verbs we've used so far. For example, let's arrange in descending order the total GDP for the year 2007:
+```{r}
+gapminder %>%
+  mutate(gdp = gdpPercap * pop) %>%
+  filter(year == 2007) %>%
+  arrange(desc(gdp))
+```
+
+The United States has the largest `gdp` of all 142 countries for the year 2007 at about 1.3 trillion dollars.
+
+Let's practice: suppose we want life expectancy to be measured in months instead of years: you'd have to multiply the existing value by 12. You can use the `mutate()` verb to change this column or to create a new column calculated in this way. 
+
+* Use mutate to create a new column called lifeExpMonths.
+
+```{r}
+gapminder%>%
+  mutate(lifeExpMonth = lifeExp * 12)
+```
+
+
+* Combine all three verbs to find the countries with the highest life expectancy, in months, in the year 2007.
+
+```{r}
+gapminder %>%
+  mutate(lifeExpMonth = lifeExp *12) %>%
+  filter( year == 2007) %>%
+  arrange(lifeExpMonth)
+```
+
+
+
+## Data Visualization with ggplot2
+
+Now let's see how we can visualize some information with `ggplot2`. Visualization and data wrangling are often intertwined. R has several systems for making graphs, but `ggplot2` is one of the most elegant and most versatile. `ggplot2` implements the *grammar of graphics*, a coherent system for describing and building graphs. You can learn more about theoretical underpinnings of `ggplot2` here: [Grammer of Graphics](http://vita.had.co.nz/papers/layered-grammar.pdf)
+
+First, let's filter for the gapminder data for the year 2007. We want to create a new dataframe to manipulate so we use the assignment operator `<-` to do so. 
+
+```{r}
+gapminder_2007 <- gapminder %>%
+  filter(year == 2007)
+```
+
+Let's examine the relationship between a country's wealth and its life expectancy. 
+
+```{r}
+library(ggplot2)
+```
+
+```{r, fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = lifeExp)) + 
+  geom_point()
+```
+
+With `ggplot2`, we begin a plot with the function `ggplot()`. `ggplot()` creates a coordinate system to which we can add layers to. The first argument of `ggplot()` is the dataset to use in the graph. In the command above we passed `gapminder_2007` as this argument. You can be explicity by typing `data = gapminder_2007` too. 
+
+We complete the graph by adding one or more layers to `ggplot`. The function `geom_point()` adds a layer of points to the plot, which creates a scatterplot. `ggplot2` comes with many geom functions taht each add a different type of layer to a plot. We'll learn several of them. 
+
+Each geom function in `ggplot2` takes a `mapping` argument. This defines how variables in your dataset are mapped to visual properties. The mapping argument is always paired with `aes()`, and the `x` and `y` arguments of `aes()` specify which variables to map to the x and y-axes. This is the purpose of the `aes(x = gdpPercap, y = lifeExp)` in the command above.
+
+Let's practice: 
+* Plot the population on the x-axis and the gdpPercap on the y-axis for the year 2007. Can you guess which country any of the points are?
+
+```{r, fig.align='center'}
+ggplot(gapminder_2007, aes(x = pop, y = gdpPercap)) + 
+  geom_point()
+```
+
+* Construct a plot of life expectancy verse the population size for the year 1952.
+
+```{r, fig.align='center'}
+gapminder_1952 <- gapminder %>%
+  filter(year == 1952)
+
+ggplot(gapminder_1952, aes(x = pop, y = lifeExp)) + 
+  geom_point()
+```
+
+
+
+### Log Scales
+
+The scatterplot we created for the GDP per capita of each country to its life expectancy shows that higher income countries tend to have higher life expectancy. One problem with this plot, however, is that a lot of countries get crammed into the leftmost part along the x-axis. This is because the distribution of GDP per capita spans several orders of magnitudes. One way to work with is a logarithmic scale. 
+
+What we'll do here is plot the same information but use log base 10 for the x-axis. On this scale, the relationship between GDP per capita and life expectancy looks more linear and you can more easily distinguish the countries at the lower end of the spectrum. Note that the label for the x-axis doesn't tell us it's been scaled - we'll fix this next.
+
+```{r, fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() + 
+  scale_x_log10()
+```
+
+We can change the axis labels with the `xlab()` and `ylab()` layers:
+
+```{r, fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() + 
+  scale_x_log10() +
+  xlab("log(gdpPercap)") + ylab("Life Expectancy (years)")
+```
+
+Let's practice:
+
+* Create a scatterplot comparing `pop` (y) and `gdpPercap` (x), with both axes on a log scale.
+
+```{r, fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = pop)) +
+  geom_point() + 
+  scale_x_log10() +
+  scale_y_log10() +
+  xlab("log(gdpPercap)") + ylab("log(pop)")
+```
+
+
+## Additional Aesthetics
+
+Let's look at some more variables with our plotting capabilities by adding two more aesthetics. Notice that `continent` is a categorical variable. We use use *color* to add this variable as an aesthetic to gain some more insight to our data. We can add color in our `aes()` aesthetic when we specify our `x` and `y` variables:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = lifeExp, color = continent)) +
+  geom_point() +
+  scale_x_log10() +
+  xlab("log(gdpPercap)") + ylab("Life Expectancy")
+```
+
+Do you notice any associations? We can also add yet another aesthetic mapped to the size of each point. We'll look at the population by mapping the size aesthetic to `pop`:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = lifeExp, color = continent,
+                           size = pop)) +
+  geom_point() +
+  scale_x_log10() +
+  #xlab("log(gdpPercap)") + ylab("Life Expectancy (years)")
+  labs(title = "Gapminder Data \n Year 2007", x = "log(gdpPercap)", y = "Life Expectancy (years)")
+```
+
+We've mapped the following variables to their respective aesthetics:
+
+
+| Aesthetic     | Variable    |  
+| ---           |     ---     | 
+| x             | gdpPerCap   | 
+| y             | lifeExp     | 
+| color         | continent   | 
+| size          | pop         |
+
+Cool, we've plotted 4 dimensions of this data in one visualization!
+
+You try:
+
+* *For the year 1952* Create a scatter plot with the population on the x-axis, life expectancy on the y-axis, and with continent represented by the color of the points. Put the x-axis on a log scale.
+
+```{r fig.align = "center"}
+ggplot(gapminder_1952, aes(x = pop, y = lifeExp, color = continent)) + 
+  geom_point() + 
+  scale_x_log10() + 
+  labs(title = "Pop vs. Life Exp. across Continent", x = "Population", y = "Life Expectancy (years)")
+```
+
+
+
+* What differences can you see between continents, in terms of their population and life expectancy?
+
+There's not really any relationship between a countries population size and its life expectancy. 
+
+* Modify the scatter plot you just made so that the size of the points represents each country's GDP per capita. 
+
+```{r fig.align = "center"}
+ggplot(gapminder_1952, aes(x = pop, y = lifeExp, color = continent, size = gdpPercap)) + 
+  geom_point() + 
+  scale_x_log10() + 
+  labs(title = "Pop vs. Life Exp. across Continent and GDP Per Capita", x = "Population", y = "Life Expectancy (years)")
+```
+
+## Faceting
+
+Yet another way to explore a categorical variable is to use faceting to create subplots based on that variable. We can use the `facet_wrap()` to accomplish this. For example, let's plot the Gapminder life expectancy verse GDP per capita faceted by continent:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() +
+  scale_x_log10() +
+  facet_wrap(~ continent) +
+  labs(title = "Gapminder Data Faceted by Continent \n Year 2007 ", x = "log(gdpPercap)", y = "Life Expectancy (years)")
+```
+
+The `~` symbol typically means "by". This tells ggplot2 to divide the data into subplots based on the continent variable. 
+
+First, you practice:
+
+* Create a scatter plot of `gapminder_1952` with the x-axis representing population, the y-axis representing life expectancy, and facted to have one subplot per continent. Put the x-axis on a log scale.
+
+```{r fig.align='center'}
+ggplot(gapminder_1952, aes(x = pop, y = lifeExp)) + 
+  geom_point() + 
+  scale_x_log10() + 
+  facet_wrap(~ continent) + 
+  labs(title = "Gapminder Data Faceted by Continent \n Year 1952 ", x = "log(gdpPercap)", y = "Life Expectancy (years)")
+```
+
+
+
+Faceting is a powerful tool and we can use it to facet to not just compare among continents but between all the years in our dataset. So far, we've only visualized information within one year. Let's create a graph showing **all** the country-level data from 1952 to 2007, to understand how global statistics have changed over time.
+
+```{r fig.align='center'}
+# Note that we use the whole dataset in the call to ggplot()
+ggplot(gapminder, aes(x = gdpPercap, y = lifeExp,
+                           color = continent, size = pop)) +
+  geom_point() +
+  scale_x_log10() +
+  facet_wrap(~ year) +
+  labs(title = "Gapminder Data Faceted by Year ", x = "log(gdpPercap)", y = "Life Expectancy (years)")
+```
+
+That's a lot of information we are sharing in one graph.
+
+## The Summarize Verb
+
+Lets find the average life expectancy across all countries and years in the dataset. We can use the `summarize` verb to do this. 
+
+```{r}
+gapminder %>%
+  summarize(meanLifeExp = mean(lifeExp))
+```
+
+We called the function `mean()` on the variable `lifeExp`. You can use any function in this call to summarize. Now it may not make much sense to calculate the mean life expectancy across all countries and years. Instead, we might find averages in a particular year as follows.
+
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  summarize(meanLifeExp = mean(lifeExp))
+```
+
+So the average life expectancy in 2007 is about 67 years. We can also summarize more things at once. Suppose we also want to find the total population in that year. 
+
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  summarize(meanLifeExp = mean(lifeExp),
+            totalPop = sum(pop))
+```
+
+Let's practice:
+
+* Use `summarize` to find the median life expectancy for the `gapminder` dataset.
+
+```{r}
+gapminder%>%
+  summarize(medLifeExp = median(lifeExp))
+```
+
+
+* Filter and use `summarize` to find the median life expectancy for 1957.
+
+```{r}
+gapminder %>%
+  filter(year == 1957) %>%
+  summarize(medLifeExp = median(lifeExp))
+```
+
+
+* Filter and use `summarize` to find the median life expectancy and max GDP per capita for the year 1957.
+
+```{r}
+gapminder %>%
+  filter(year == 1957) %>%
+  summarize(medLifeExp = median(lifeExp), 
+            maxGdpPercap = max(gdpPercap))
+```
+
+
+## The Group_by Verb
+
+What if we are interested in each of the years in the dataset and their expected life expectancies and other statistics? Instead of rerunning this code and changing the year many times, we can use the `group_by` verb. The `group_by` verb tells dplyr to summarize within groups instead of summarizing the entire dataset.
+
+```{r}
+gapminder %>%
+  group_by(year) %>%
+  summarize(meanLifeExp = mean(lifeExp),
+            totalPop = sum(pop))
+```
+
+Notice that this essentially replaced the `filter(year == 2007)` with `group_by(year)`. It iteratively cycles through each year and computes the summarize statistics.
+
+Let's summarize the average life expectancy and the total popuation in 2007 within each continent. 
+
+```{r}
+gapminder %>% 
+  filter(year == 2007) %>%
+  group_by(continent) %>%
+  summarize(meanLifeExp = mean(lifeExp),
+            totalPop = sum(pop)) %>%
+  arrange(desc(meanLifeExp))
+```
+
+Now that we've calculated these statistics for each continent in 2007, we might be interested in how they changed for each continent over time. We can summarize by both year and continent, by adding year to the `group_by` verb. 
+
+```{r}
+gapminder %>% 
+  group_by(year, continent) %>%
+  summarize(meanLifeExp = mean(lifeExp),
+            totalPop = sum(pop))
+```
+
+Let's Practice:
+
+* Find the median life expectancy and maximum GDP per capita *within each year*, saving them into `medianLifeExp` and `maxGdpPercap`, respectively. 
+
+```{r}
+gapminder %>% 
+  group_by(year) %>%
+  summarize(medianLifeExp = mean(lifeExp),
+            maxGdpPercap = max(gdpPercap))
+```
+
+
+* Filter for the year 1957 then find the median life expectancy and maximum GDP per captia *within each continent*.
+
+```{r}
+gapminder %>%
+  filter(year == 1957) %>%
+  group_by(continent) %>%
+  summarize(medianLifeExp = mean(lifeExp),
+            maxGdpPercap = max(gdpPercap))
+```
+
+
+* Now find the median life expectancy and maximum GDP per capita *within each combination of continent and year*. 
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarize(medLifeExp = median(lifeExp),
+            maxgdp = max(gdpPercap))
+```
+
+
+
+## Visualizing Summarized Data
+
+Let's turn these summaries we've made into visualizations. Recall we found the total population and mean life expectancy of each year to see how it has changed. Now instead of viewing the summarized data as a table, let's use `ggplot2` to visualize it.  
+```{r}
+# Save the table as an object by_year
+by_year <- gapminder %>%
+  group_by(year) %>%
+  summarize(totalPop = sum(pop),
+            meanLifeExp = mean(lifeExp))
+
+by_year
+```
+
+Now to use ggplot:
+
+```{r fig.align = 'center'}
+ggplot(by_year, aes(x = year, y =totalPop)) +
+  geom_point()
+```
+
+What if you want to include a zero on the y-axis? 
+
+```{r fig.align = 'center'}
+ggplot(by_year, aes(x = year, y =totalPop)) +
+  geom_point() + 
+  expand_limits(y = 0)
+```
+
+Now you can see that the population is almost tripling during this time.
+
+Recall we also summarized after grouping by both year and continent to see how the changes in population have occurred separately within each continent. Since we now have data over time within each continent, we need a way to separate it in a visualization. We can do so with the color aesthetic.
+
+```{r}
+by_year_continent <- gapminder %>% 
+  group_by(year, continent) %>%
+  summarize(meanLifeExp = mean(lifeExp),
+            totalPop = sum(pop))
+
+by_year_continent
+```
+
+```{r fig.align = "center"}
+ggplot(by_year_continent, aes(x = year, y = totalPop, color = continent)) + 
+  geom_point() + 
+  expand_limits(y = 0)
+```
+
+Let's practice:
+
+* Use the `by_year` dataset to create a scatterplot showing the change of median life expectancy over time, with `year` on the x-axis and `medianLifeExp` on the y-axis. Be sure to add `expand_limits(y = 0)` to make sure the plots y-axis includes zero.
+
+```{r fig.align = 'center'}
+by_year <- gapminder %>%
+  group_by(year, continent) %>%
+  summarize(totalPop = sum(pop),
+            meanLifeExp = mean(lifeExp),
+            medLifeExp = median(lifeExp))
+
+ggplot(by_year, aes(x = year, y = medLifeExp, color = continent)) +
+  geom_point() + 
+  expand_limits(y=0)
+```
+
+
+
+## Types of Visualizations
+
+Let's learn how to create line plots, bar plots, histograms, and boxplots with `ggplot2`. The graphs so far have been scatterplots. 
+
+### Line Plots
+
+Let's use `by_year_continent` dataset and make a line plot:
+
+```{r fig_align = "center"}
+ggplot(by_year_continent, aes(x = year, y = meanLifeExp, color = continent)) + 
+  geom_line() + 
+  expand_limits(y = 0)
+```
+
+Practice:
+
+* Create a line plot showing the change in median GDP per capita over time. 
+
+```{r fig.align='center'}
+by_year <- gapminder %>%
+  group_by(year) %>%
+  summarize(totalPop = sum(pop),
+            medianGdpPercap = median(gdpPercap))
+
+#Fill in a ggplot command
+# Create a line plot showing the change in medianGdpPercap over time
+by_year %>% ggplot(aes(x = year, y = medianGdpPercap)) +
+  geom_line() + 
+  labs(title = "Lineplot of Median GDP over time", 
+       x = "Year",y = "Median GDP")
+```
+
+* Use `group_by()` and `summarize()` to find the median GDP per capita *within each year and continent*, calling the output column *medianGdpPercap*. Use the assignment operator `<-` to save it to a dataset called `by_year_continent`. 
+
+```{r}
+by_year_continent <- gapminder %>% 
+  group_by(year, continent) %>%
+  summarise(medianGdpPercap = median(gdpPercap))
+
+by_year_continent
+```
+
+
+
+* Use the `by_year_continent` dataset to create a line plot showing the change in median GDP per capita over time, with color representing continent. Use `expand_limits(y = 0)` to include 0 on the y-axis.
+
+```{r}
+ggplot(by_year_continent, aes(x = year, y = medianGdpPercap, color = continent))+
+  geom_line()+
+  expand_limits(y = 0)+
+  labs(title = "Change in Median GDP per Capita Over Time \n per Continent", y = "Median GDP per Capita", x = "Year")
+```
+
+
+
+### Bar Plots
+
+Bar plots are useful for comparing values across discrete categories or for categorical variables, such as continents.
+
+Recall, we found the average life expectancy for the year 2007 by continent:
+
+```{r}
+by_continent <- gapminder %>%
+  filter(year == 2007) %>%
+  group_by(continent) %>%
+  summarize(meanLifeExp = mean(lifeExp))
+
+by_continent
+```
+
+We can visualize this with a bar plot:
+
+```{r fig.align='center'}
+ggplot(by_continent, aes(x = continent, y = meanLifeExp)) +
+  geom_col(fill = "light green", color = "light blue")
+```
+
+There are two aesthetics: the x variable is the categorical variable and y is the variable that determines the height of the bars.
+
+Practice:
+
+* Use `group_by()` and `summarize()` to find the median GDP per capita within each continent in the year 1952, calling the output column `medianGdpPercap`. Use the assignment operator `<-` to save it to a dataset called `by_continent`.
+
+```{r}
+by_continent <- gapminder %>%
+  filter(year == 1952) %>%
+  group_by(continent) %>%
+  summarize(medianGdppercap = median(gdpPercap))
+
+by_continent
+```
+
+
+* Use the `by_continent` dataset to create a bar plot showing the median GDP per capita in each continent.
+```{r}
+by_continent %>% ggplot(aes(x = continent, y = medianGdppercap)) + 
+  geom_col()
+```
+
+
+
+### Histograms
+
+We can investigate one dimension of the data at a time with a histogram. Let's look at the distribution of life expectancy for the year 2007:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = lifeExp)) +
+  geom_histogram()
+```
+
+We can add some color!
+
+```{r}
+library(scales)
+colorsPastels <- c("#FA6E4F", "#F2CF59", "#FB8E7E", "#C5D7C0", "#8EC9BB", "#F8CA9D")
+show_col(colorsPastels, labels = F, borders = NA)
+```
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = lifeExp)) +
+  geom_histogram(color = "grey30", fill = colorsPastels[5])
+```
+
+
+The histogram has only one aesthetic, which is `x`, the variable whose distribution you are examining. The bin width is chosen automatically. You may want to customize this. You can use the `binwidth` option. For example, setting `binwidth = 5` means that each of the bars in the histograms represents a width of five years:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = lifeExp)) +
+  geom_histogram(binwidth = 5, color = "grey30", fill = colorsPastels[5])
+```
+
+We can also specify the number of bins with the `bin = #` argument. As well as do a log transformation to the variable we're examining:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = pop)) +
+  geom_histogram(color = "grey30", fill = colorsPastels[5]) + 
+  scale_x_log10()
+  
+```
+
+### Boxplots
+
+Boxplots are also useful for looking at one dimension. However boxplots also make it easier to compare the distributions to each other. For example, we could compare life expectancy across continents as follows:
+
+```{r fig.align='center'}
+ggplot(gapminder_2007, aes(x = continent, y = lifeExp)) +
+  geom_boxplot() + 
+  labs(title = "Comparing Life Expectency across Continents", x = "Continent", y = "Life Expectancy (years)")
+```
+
+It has two aesthetics, x is the category and y is the values we're comparing. 
+
+The black line in the middle of each box represents the median life expectancy here. The top and bottom of the box represents the 75th and 25th percentiles, respectively. The lines going up and down, called whiskers, cover additonal countries. The two dots below in the Americas and Asia are outliers relative to their distributions.
+
+Practice:
+
+* Use the `gapminder_1952` dataset to create a boxplot comparing GDP per capita among continents. Put the y-axis of a log scale with `scale_y_log10()`. 
+
+```{r}
+ggplot(gapminder_1952, aes(x = continent, y = gdpPercap)) +
+  geom_boxplot() + 
+  scale_y_log10() +
+  labs(x = " Continent", y =  "Log of GDP Per Capita")
+```
+
+
+
+#### Notes & References
+* I recommend just installing/updating and loading the `tidyverse` package. This will load all prerequisite packages such as `dplyr` and `ggplot2`. 
+
+* The pipe operator `%>%` is loaded through the `magrittr` package which `dpylr` loads implicitly. To see more about this operator you can visit [maggritr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)
+
+* See [-ise verse -ize](https://en.wikipedia.org/wiki/American_and_British_English_spelling_differences#-ise,_-ize_(-isation,_-ization)) for more about the spelling difference in visualization verse visualisation. 
+
+* [Grammer of Graphics](http://vita.had.co.nz/papers/layered-grammar.pdf)
+
+* [R Markdown](https://rmarkdown.rstudio.com/)
+
+* [Gapminder](https://www.gapminder.org/)
+
+* [DataCamp](https://learn.datacamp.com/)
+
+
