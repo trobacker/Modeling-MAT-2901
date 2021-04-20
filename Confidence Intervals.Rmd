@@ -1,0 +1,199 @@
+---
+title: "Confidence Intervals"
+author: "Thomas Robacker"
+date: "March 11, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+
+As we saw in the last section, we saw that the sampling distribution for a mean became centered around the population mean $\mu$. Given a few assumptions/conditions, whether we knew $\sigma$ for the population and knowing the sample size $n$, we could invoke the CLT to approximate the sampling distribution as a normal distribution, $N(\mu,\sigma/\sqrt{n})$, or a $t$-distribution with $n-1$ degrees of freedom for $n<30$ and a normal population. Our goal in this section is to perform a parameter estimation on the population mean of interest through a confidence interval. 
+
+## Standard Error versus Standard Deviation
+
+Recall that when we didn't have population standard deviation, $\sigma$, of the population, we approximated it with the sample standard deviation, $s$. Last section, we saw that the magnitude of the sampling error, the amount of discrepancy between $\bar{x}$ and $\mu$, is described by the sampling distribution of $\bar{X}$. The *standard deviation* of the sampling distribution of $\bar{X}$ is
+\[
+\sigma_{\bar{X}}=\frac{\sigma}{\sqrt{n}}
+\]
+
+Since $s$ is an estimate of $\sigma$, a natural estimate of $\sigma/\sqrt{n}$ is $s/\sqrt{n}$, this is called the **standard error of the mean**. We denote it $SE(\bar{x})$.
+\[
+SE(\bar{x})=\frac{s}{\sqrt{n}}
+\]
+The SE can be interpreted in terms of the expected sampling error: Roughly speaking, the difference between $\bar{x}$ and $\mu$ is rarely more than a few standard errors. The smaller the SE, the more precise the estimate. It's important to know the distinction between the SD and the SE. The SD describes the dispersion of the data, while the SE describes the unreliability (due to sampling error) in the *mean* of the sample as an estimate of the *mean* of the population. 
+
+**Example:** A geneticist weighted (kg) 28 female lambs at birth. The labs were all born in April, were all the same breed (Rambouillet), and were all single births (no twins). The diet and other environmental conditions were the same for the parents. The weights are stored in `lamb` and we calculated the SD and SE:
+
+```{r}
+lambs<-c(4.3,5.5,5.4,5.8,5.2,5.3,5.5,6.1,6.2,4.0,3.6,4.9,
+         6.7,4.9,5.8,4.5,5.3,5.2,5.6,4.8,4.9,4.9,5.0,5.4,
+         4.7,5.3,5.2,4.7)
+mean(lambs)
+sd(lambs)
+
+#standard error
+sd(lambs)/sqrt(length(lambs))
+```
+
+The mean is $\bar{x}=5.17$ kg, the standard deviation is $s=0.65$ kg, and the standard error is SE = 0.12 kg. The standard deviation, s, describes the variability of birthweights among the lambs in the sample, while the SE indicates the variability associated with the sample mean, viewed as an estimate of the population mean birthweight. If the sample size were to increase, we would see that $\bar{x}\rightarrow \mu$, $s\rightarrow \sigma$, and $SE\rightarrow 0$, so the SE gets smaller with larger samples. 
+
+## Confidence Interval for $\mu$
+
+### Basic Idea
+
+Imagine there's an invisible person walking a dog. The dog, which is visible, is on an invisible spring-loaded leash. The tension on the spring is such that the dog is within 1 SE of the person about two-thirds (67%) of the time. The dog is within 2 standard errors of the person 95% of the time. Only 5% of the time is the dog more than 2 SEs from the person. 
+
+We can see the dog, but would like to know where the person is. Since the person and the dog are usually within 2 SEs of each other, we can take the interval "dog $\pm$ 2 $\times$ SE" as an interval that typically would include the person. Indeed, we could say that we are 95% confident that the man is in this interval. 
+
+This is the basic idea of a *confidence interval*. We would like to know the value of the population mean $\mu$, which corresponds to the person, but we cannot see it directly. What we can see is the sample mean $\bar{x}$, the dogs position. We use what we can see, $\bar{x}$, together with the SE, which we can calculate from the data, as a way of constructing an interval that we hope will include what we cannot see, the population mean $\mu$. 
+
+### The Mathematics
+
+In the invisible man analogy, we said the dog is within 2 SEs of the man 95% of the time. This is  based on the idea of the sampling distribution of $\bar{X}$ when we have a random sample from a normal distribution. On the standard normal distribtuion, we know that there's a cumulative area of 95%=0.95 between the z-scores -1.96 and 1.96:
+\[
+p(-1.96<Z<1.96)=0.95
+\]
+therefore 
+\[
+P(-1.96< \frac{\bar{X}-\mu}{\sigma/\sqrt{n}}<1.96)=0.95
+\]
+which, with a little algebra, leads to a "confidence interval":
+\[
+P(\bar{X}-1.96\cdot \frac{\sigma}{\sqrt{n}}<\mu<\bar{X}+1.96\cdot \frac{\sigma}{\sqrt{n}})
+\]
+that is, the interval
+\[
+\bar{X} \pm 1.96\frac{\sigma}{\sqrt{n}}
+\]
+will contain $\mu$ for 95% of all samples of size $n$. More generally, you could a different level of confidence by finding the z-score that marks of that central area under the standard normal, called a *critical-value*, $z^*$: 
+\[
+\bar{X} \pm z^*\frac{\sigma}{\sqrt{n}}
+\]
+
+Now, this interval should not be used for data analysis because it contains $\sigma$. Instead, we'll replace $\sigma$ by its estimate, $s$, then calculate an interval from the data. In this case, we must use the $t$-distribution to account for the extra variability.
+
+### The Method
+
+We'll describe the Student's $t$ method for constructing a confidence interval for $\mu$, based on a random sample from a normal population. To construct a 95% percent confidence interval for $\mu$, we compute the lower and upper limits of the interval as
+\[
+\bar{x}-t_{0.025}SE(\bar{x}) \quad \mbox{and} \quad \bar{x}+t_{0.025}SE(\bar{x})
+\]
+that is,
+\[
+\bar{x}\pm t_{0.025}\frac{x}{\sqrt{n}}
+\]
+where the critical value $t_{0.025}$ is determined from Student's $t$ distribution with degrees of freedom, 
+\[
+df=n-1
+\]
+
+All confidence intervals are of the form
+\[
+statistic \pm critical\ value \times standard\ error
+\]
+
+A few important points to note:
+
+* The level of confidence is usually expressed as a percentage, such that you'd construct a $100 \times (1-\alpha)$ percent confidence interval, where $0<\alpha<1$ is an "amount of tail probability".
+
+* The three most common levels of confidence are 90% ($\alpha = 0.1$), 95% ($\alpha = 0.05$) and 99% ($\alpha = 0.01$. 
+
+* We state the interpretation of a confidence interval as "I am $100\times (1-\alpha)$ percent confident that the true parameter value lies somewhere between [lower bound] and [upper bound]"
+
+**Example:** Let's construct a 95% confidence interval for the lamb data from earlier. For a 95% confidence interval, $\alpha = 0.1$. So, for a central area of 0.95 under the $t$-distribution, there's a $\alpha/2 = 0.025$ area in either tail. We'll use this knowing that R's `q` functions operate baed on a total lower tail area. Let's do it:
+
+```{r}
+# Sample stats
+xbar <- mean(lambs)
+se   <- sd(lambs)/sqrt(length(lambs))
+
+# Degrees of freedom
+dof = length(lambs)-1
+
+# Critical value t_{0.025}
+critval <- qt(0.975,df=dof)
+critval
+
+#Note that the central, symmetric area under the curve must be 0.95:
+pt(critval,dof)-pt(-critval,dof)
+
+# Lower and upper bound
+xbar - critval*se
+xbar + critval*se
+```
+
+We can do all this with R's built-in function `t.test`:
+```{r}
+t.test(lambs)
+
+# Just observe the 95 percent confidence interval for now
+```
+
+We could get a 99% confidence interval easily:
+
+```{r}
+t.test(lambs, conf.level = 0.99)
+```
+
+** Exercise:** Find the 95% confidence interval "the long way" by manually calculating the statistics for the Dunedin temperatures from the last section - and it is interpreted. Then use `t.test` to find the 90 and 99 percent CIs:
+```{r}
+# Data
+set.seed(16)
+sample<- rnorm(5,mean=22, sd=1.5)
+sample
+
+# Your calculations
+
+
+# t.test methods
+```
+
+### Interpretation of a CI
+
+Given a $100\times(1-alpha)% percent confidence level: over many samples of the same size and form the sample population, we would expect the true corresponding paramter value to fall within the limits of $100(1-\alpha)$ percent of those intervals. 
+
+This comes from the fact that the theory of a sampling distribution describes the variability in multiple samples, not just the sample that has been taken. We can simulate this process:
+
+```{r}
+## This is a script to generate a plot of several 
+#  Confidence Intervals for IQ scores that are N(100,15).
+set.seed(42) #set RNG
+n<-30 #sample size
+nsamp<-100 #number of samples
+mu<-100 #mean
+sigma=15 #standard deviation
+yes=0 #counter
+
+# Generate empty plot template
+plot(NULL,xlim = c(85,115),ylim = c(0,nsamp),
+     ylab = "Interval Index",xlab = "IQ Score")
+
+for(i in 1:nsamp)
+{
+    x<-rnorm(n = n, mean = mu, sd = sigma)
+    out<-t.test(x)
+    l<-out$conf.int[1]
+    u<-out$conf.int[2]
+    lines(x = c(l,u), y = c(i,i), type = "l")
+
+    if(l < mu & u > mu)
+    {
+        yes<-yes+1
+        lines(x = c(l,u), y = c(i,i), type = "l",col = "dark green")
+    }
+    else 
+    {
+        lines(x = c(l,u), y = c(i,i), type = "l",col = "red")
+    }
+}
+abline(v=mu,col = "magenta",lwd = 2,)
+
+phat<-yes/nsamp
+cat("The proportion of confidence intervals that contain the true parameter value of",mu,"is",phat*100,"percent.")
+```
+
+

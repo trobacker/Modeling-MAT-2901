@@ -1,0 +1,344 @@
+---
+title: "Introduction to Linear Regression"
+author: "Thomas Robacker - MAT 2901"
+css: styles.css
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+## Introduction
+
+Linear regression models describe the effect that a particular variable, called the *explanatory variable*, might have on the value of a continuous outcome variable, called the *response variable*. The explanatory variable may be continuous, discrete, or categorical, but to introduce the key concepts, we'll concentrate on continuous explanatory variables for this section. 
+
+## An Example of a Linear Relationship  
+
+Let's work with some student survey data, `survey` from the package `MASS`. This data records particular characterisics of 237 first-year undergraduate statistics sudents collected from a class at the University of Adelaide, South Australia. 
+
+```{r}
+library(MASS)
+#?survey
+head(survey)
+```
+
+Let's plot the student heights on the y-axis and their handspans (of their writing hand) on the x-axis. We'll do a base R version and a ggplot version.
+
+```{r}
+## ggplot2 version :)
+ggplot(survey, aes(x = Wr.Hnd, y = Height)) + 
+  geom_point() + 
+  labs(title = "Student Height vs. Writing Hand Width", 
+       x = "Hand Width (cm)",
+       y = "Height (cm)") + 
+  theme_minimal()
+```
+
+```{r}
+## Base R version
+plot(survey$Height ~ survey$Wr.Hnd,
+     xlab = "Hand Width (Writing Hand)",
+     ylab = "Height (cm)")
+```
+
+Note that the call to plot here uses **formula notation** with the `~` symbol (also called symbolic notation). It specifies that we are plotting "height *on* handspan" or "height *versus* handspan" or "height *depending on* handspan".
+
+As you can see, there is a positive association between a students handspan and their height (as hand width increases, so does their height). This relationship appears to be linear. To assess the strength of the linear relationship, we can find the estimated correlation coefficient. 
+
+```{r}
+cor(survey$Wr.Hnd, survey$Height, use = "complete.obs")
+
+# You can think of the use = "complete.obs" as 
+# using na.rm = T for univariate statistics
+```
+
+If you neglect to include the `use = "complete.obs"`, you'll get an `NA` returned. This is because there are some missing values. So, the correlation coefficient is `0.6009909`, confirming a positive association and showing a moderately strong linear relationship. *Correlation* allows one to interpret the covariance by identifying both the direction and the strength of an association. There are different types of correlation coefficients, but the most common of these is *Pearson's product-moment correlation coefficient*, the default implented by R. This number, $\rho_{xy}$ or often abbreviated as simply $r$, is always a value between -1 and 1. The closer to 1, the stronger a positive linear model fits, and similarly for a negative direction with -1. *Always* look at your scatterplots to confirm this. A $r$ close to 0 shows no (linear) relationship at all and we may say there is no linear relationship between the variables.
+
+
+In the scatterplots above, there aren't actually all 237 observations shown. To find out how many offending observations have been deleted, we can use the `is.na` function with our tidyverse verbs to find these. 
+
+```{r}
+# Filter for obs which have either missing height or handspan
+incomplete.obs <- survey %>% 
+  filter(is.na(Height) | is.na(Wr.Hnd))
+
+head(incomplete.obs, 5)
+dim(incomplete.obs)
+
+#Make a df with no missing Height/Wt.Hnd:
+survey_complete <- survey %>%
+  filter(!is.na(Height) & !is.na(Wr.Hnd))
+```
+
+## General Concepts for Linear Regression
+
+The purpose of a linea rregression model is to come up with a function that estimates the *mean* of one variable given a particular value of another variable. These variables are known as the *response variable* (the "outcome" variable whose mean we are attempting to find) and the *explanatory variable* (the "predictor" variable whose value you may already have). 
+
+In terms of the student survey example, we might ask something like "What's the expected height of a student if their handspan is 14.5 cm?" 
+
+## Definition of the Model
+
+Assume you're looking to determine the value of response variable $Y$ given the value of an expalanatory variable $X$. The simple linear regression model stats that the value of a response is expressed as the following equation:
+
+\[
+Y|X = \beta_0 + \beta_1 X + \epsilon
+\]
+
+On the left hand side, the notation $Y|X$ reads as "the value of $Y$ conditional upon the value of $X$."
+
+### Residual Assumptions
+
+The validity of the conclusions one may draw based on the linear model is critically dependent on the assumptions made about $\epsilon$, which are defined as follows:
+
+* The value of $\epsilon$ is assumed to be normally distributed such that $\epsilon \sim N(0,\sigma)$.
+
+* That $\epsilon$ is centered (has a mean of) zero. 
+
+* The variance of $\epsilon$, $\sigma^2$, is constant (homogeneity of variance). 
+
+The $\epsilon$ term represents random error. In other words, we assume that any raw value of the response is owed to a linear change in a given value of $X$, plus or minus some random, *residual* variation or normally distributed *noise*. 
+
+## Parameters
+
+The valuedenoted by $\beta_0$ is called the *intercept* and $\beta_1$ is called the *slope*. Together they are referred to as teh *regression coefficients* and are interpreted as follows:
+
+* The intercept, $\beta_0$, is the expected value of the response variable when the predictor ($X$) is zero. 
+
+* The slope, $\beta_1$ is the focus of interest in a linear model. It represents the change in the mean response for each one-unit increase in the predictor. 
+
+## Estimating the Intercept and Slope Parameters
+
+The goal is to use out data to estimate the regression parameters , yielding the estimates $\hat{\beta}_0$ and $\hat{\beta}_1$; this is referred to as *fitting* the linear model. In this case, the data comprise $n$ pairs of observations for each individual. The fitted model of interest concerns the mean response value, denoted $\hat{y}$, for a specific value of the predictor, $x$, and is written as follows:
+\[
+\hat{y} = \hat{\beta}_0 + \hat{\beta}_1 x
+\]
+
+Sometimes, we write $\mathbb{E}[Y]$ or $\mathbb{E}[Y|x=x]$ on the left side to emphasize the fact that the model gives the mean (expected value) of the response. We'll stick with $\hat{y}$ for now and see the meaning of the other notation when we discuss probability later. 
+
+Let our $n$ observation data pairs be denoted $x_i$ and $y_i$ for the predictor and response variables, respectively; $i=1,\ldots,n$. Then, the parameter estimates for the simple linear regression function are
+\[
+\hat{\beta}_1 = r\frac{s_y}{s_x} \qquad \hat{\beta}_0 = \bar{y}-\hat{\beta}_1
+\bar{x}
+\]
+
+where 
+
+* $\bar{x}$ and $\bar{y}$ are teh sample means of the x and y variables. 
+
+* $s_x$ and $s_y* are the sample standard deviations of the x and y variables. 
+
+* $r$ is the correlation coefficient between the x and y variables.
+
+The formulas above for estimating the model parameters is referred to as *least-squares regression*. 
+
+## Fitting Linear models with `lm`
+
+In R, the command `lm` performs the estimation for you. For example, here's the fitted linear model of the mean student height by handspan stored as `model` in our environment:
+
+```{r}
+model <- lm(Height ~ Wr.Hnd, data = survey_complete)
+```
+
+The first argument is the familiar `response ~ predictor` formula. By specifying `data = survey` we didn't have to use the `$` operator to extract the columns. 
+
+The fitted linear model object istself has a special class in R, one of "lm" which is stored as *list*. If you simply enter the name of the "lm" object it will provide the basic output: a repeat of the call to `lm` we made and the estimates of teh intercept and slope:
+
+```{r}
+model
+```
+
+
+This reveals that the linear model for this example is estimated as:
+\[
+\hat{y}= 113.954 + 3.117x
+\]
+
+This is the equation of a line. The y-intercept of 113.954 can be interpreted as saying the mean height of a student with a handspan of 0 cm is 113.954 cm (a not so useful statement). The slope tells us the change in the mean height for every 1 cm increase in handspan is estimated to increase by 3.117 cm. 
+
+We can verify the explicit solutions to the parameter estimates work too:
+```{r}
+slope <- cor(survey$Wr.Hnd, survey$Height, use = 'complete.obs')*sd(survey$Height, na.rm = T)/sd(survey$Wr.Hnd, na.rm = T)
+yint <- mean(survey$Height, na.rm = T)-slope*mean(survey$Wr.Hnd, na.rm = T)
+
+slope <- cor(survey_complete$Wr.Hnd, survey_complete$Height)*sd(survey_complete$Height)/sd(survey_complete$Wr.Hnd)
+yint <- mean(survey_complete$Height)-slope*mean(survey_complete$Wr.Hnd)
+
+
+slope
+yint
+
+```
+
+
+
+Let's plot the fitted line:
+
+```{r}
+## Base R version
+plot(survey_complete$Height ~ survey_complete$Wr.Hnd,
+     xlab = "Hand Width (Writing Hand)",
+     ylab = "Height (cm)")
+abline(reg = model, lwd = 2, col = "red")
+```
+
+We can also do this in `ggplot` with the layer `geom_smooth()`:
+
+```{r}
+## ggplot2 version
+ggplot(survey_complete, aes(x = Wr.Hnd, y = Height)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm', se = F, color = "red") +
+  labs(title = "Student Height vs. Writing Hand Width", 
+       x = "Hand Width (cm)",
+       y = "Height (cm)") + 
+  theme_minimal()
+```
+
+We used `geom_smooth(method = 'lm', se = F, color = "red")` to plot the regression line with the arguments `method = 'lm'` to plot the lease-squares regression line (loess by default), `se = F` to plot without a confidence interval band, and `color = red` to make the line red.
+
+Now, the caveat with `ggplot` is that we can plot the linear regression using `geom_smooth` but it won't return to use the actual linear model. So, what if we wanted to plot our regression line with a specific model we generate with `lm()`? Well, the function below can be used to do this. We'll talk about creating functions in more detail later. 
+
+```{r}
+# Function to plot Regression in ggplot2 - LINEAR ONLY for now
+
+ggplotRegression <- function (fit, se = T) {
+  
+  require(ggplot2)
+  
+  ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+    geom_point() +
+    stat_smooth(method = "lm", col = "red", se = se) +
+    labs(title = paste("R2 = ",signif(summary(fit)$r.squared, 5),
+                       "Intercept =",signif(fit$coef[[1]],5 ),
+                       " Slope =",signif(fit$coef[[2]], 5),
+                       " P =",signif(summary(fit)$coef[2,4], 5)))
+}
+```
+
+To use this, we simply pass a "lm" object and we can specify the `se` argument which is set to `TRUE` by default to match the behavior of `geom_smooth`. Let's see:
+
+```{r}
+ggplotRegression(model, se = F) + 
+  theme_minimal()
+```
+
+This convenient function also outpus some useful statistics along the title. 
+
+## Illustrating Residuals
+
+When the parameters are estimated as we've done above, the fitted line is referred to as an implementation of *least_squares regression* because it's the line that minimizes the average squared difference between the observed data and itself. Or more succintly, it *minimizes the sum of squared errors (residuals)*. Let's look at this [link](https://phet.colorado.edu/sims/html/least-squares-regression/latest/least-squares-regression_en.html).
+
+*Residual Diagnostics* are crucial to determining the *validity* of our linear model. Let's see how to access them first.
+
+We can access a lot of information about our regression line from the "lm" object, including residuals. Let's see what they are:
+
+```{r}
+names(model)
+```
+
+We can extract the components in the same way we would the columns of a dataframe:
+
+```{r}
+model$coefficients
+```
+
+However, it is preferable to extract such components using a "direct-access" function. For the `coefficients` component of an "lm" object, the function we can use is `coef`:
+
+```{r}
+mycoefs <- coef(model)
+mycoefs
+
+# Store in two objects
+beta0.hat <- mycoefs[1]
+beta1.hat <- mycoefs[2]
+```
+
+Other common direct-access functions include `resid` and `fitted`; these refer to the "`residuals`" and "`fitted.values" components, respectively. 
+
+Let's look at the residuals by plotting the *residuals* versus the *fitted values*:
+
+```{r}
+#Store residuals and fitted values:
+residuals <- resid(model)
+fitvalues <- fitted(model)
+
+plot(residuals ~ fitvalues, pch = 16, main = "Residual Plot",
+     xlab = "Fitted value", ylab = "Residual")
+abline(h = 0, lwd = 2)
+```
+
+In `ggplot`:
+
+```{r}
+# Make a dataframe object of residuals and fitted values
+diagnostic_df <- data.frame(residuals = resid(model), fit.value = fitted(model)) 
+
+ggplot(diagnostic_df, aes(x = fit.value, y = residuals)) + 
+  geom_point() +
+  theme_minimal() + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Residual Plot", x = "Fitted Value", y = "Residual")
+
+```
+
+Now that we have our *residual plots* we can start assessing the validity of our linear model. This is exactly what we'd like to see in our residual plots if we are hoping a linear model is appropriate. Essentially, we see that there is no systematic pattern to the "errors", the residuals, in our model. Let's see how these plots relate to our theoretical assumptions we made earlier. 
+
+Recall our assumptions earlier: 
+
+* The value of $\epsilon$ is assumed to be normally distributed such that $\epsilon \sim N(0,\sigma)$.
+
+* That $\epsilon$ is centered (has a mean of) zero. 
+
+* The variance of $\epsilon$, $\sigma^2$, is constant (homogeneity of variance). 
+
+We can assess these visually with our residuals and residual plots. To check for normality we can make a histogram of the residuals:
+
+```{r}
+ggplot(diagnostic_df, aes(x = residuals)) + 
+  geom_histogram(color = "dark grey", fill = "aquamarine4") + 
+  theme_minimal()
+
+ggplot(diagnostic_df, aes(x = residuals)) + 
+  geom_density(color = "dark grey", fill = "aquamarine4") + 
+  theme_minimal()
+
+```
+
+Looking at the density plot and histograms, it's reasonable to assume that the residuals, and hence the $\epsilon$ term, has a normal distribution centered around zero with some finite variance. The standard deviation of the residuals is easy to find:
+
+```{r}
+summary(model)
+
+# Residual standard error
+summary(model)$sigma
+
+```
+
+The `summary(model)` using the `summary()` command gives us a lot of summarized information which you can access individually as well as seen above; we extracted the residual standard error which is the estimated $\sigma$ term for our residual assumption of normality. 
+
+With the culmination of diagnostic information so far, we can be confident that there is a linear relationship estimated by our fitted linear model. We'll learn more formal ways of testing the diagnostics we've done later in our course - we need probability theory first. 
+
+## Coefficient of Determination
+
+Finally, let's discuss a measure of overall fit that is commonly used. The output of `summary()` also provides you the values of `Multiple R-squared` and `Adjusted R-squared`. Both of these are referred to as the *coefficient of determination*; they describe *the proportion of the variation in the response that can be attributed to the predictor*. 
+
+For simple linear regression, the first (unadjusted) measure is simply obtained as teh square of the estimated correlation coefficient: $R^2=r^2$. Let's show this for our example:
+
+```{r}
+summary(model)$r.squared
+
+rho.xy <- cor(survey$Wr.Hnd, survey$Height, use = "complete.obs")
+rho.xy^2
+```
+
+This tells us that about 36.1 percent of the variation in the student heights can be attributed to handspan. The remaining 63.9% can be attributed to other variables and the residual standard error. 
+
+The adjusted measure is an alternative estimate that takes into account the number of parameters that require estimation. The adjusted measure is generally important only if you're using the coefficient of determination to assess the overall "quality" of the fitted model in terms of a balance between goodness of fit and complexity. We'll cover it in more detail later. It can helps choose a "best" model among others models.
+
+## Conclusion
+
+We've learned how to fit a linear regression model to two continuous variables. Our next goal may be to make prediction or assess the models ability to estimate certain outcomes. We need more probability theory before we can formally tackle this issue. We'll start with that next class.
+

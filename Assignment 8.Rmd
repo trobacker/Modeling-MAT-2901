@@ -1,0 +1,116 @@
+---
+title: "Assignment 8"
+author: "Your Name"
+date: "Due: Tuesday, April 6, midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+### Inferences for Means
+
+Using the following to answer questions 1 through 5. *Do not use the `t.test` function here, complete it by entering the appropriate commands.* 
+
+Adult domestic cats of a certain breed are said to have an average weight of 3.5 kilograms. A feline enthusiast disagrees and believes they weight more than that. She collects a sample of 73 weights of cats of this breed. From her sample, she calculates a sample mean of 3.97 kg and a standard deviation 2.21 kg. Perfrom a one-sample t-test to test her claim as outlined:
+
+1. Write down the null and alternative hypotheses.
+
+2. Calculate the test statistic, $t$. 
+
+3. Find the P-value using the appropiate area under a $t$-distribution. 
+
+4. Based on your P-value, make a conlusion using a significance level of $\alpha=0.05$. What's the conclusion in context?
+
+5. Construct a 95% confidence interval for the true average weight of this breed.
+
+Use the following information to answer questions 6 through 7. You'll use the Pulse Rates dataset on Moodle. A medical researcher measured teh pulse rates (beats per minute) of a sample of randomly selected adults. You should use the `t.test` function.
+
+6. Construct a 95% confidence interval for the true average pulse rate. Interpret your interval
+
+7. The average pulse rate is about 80 bpm. Conduct a hypothesis test to test whether this sample mean differs from this average.
+
+Use the following information for questions 8 through #. Some students checked 6 bags of Dorito marked with a net weight of 28.3 grams. They carefully weighted the contents of each bag, recording the following data:
+
+```{r}
+doritos<-c(29.2, 28.5, 28.7, 28.9, 29.1, 29.5)
+```
+
+8. Do these data satisfy the assumptions for inference of the mean? Check for normality using the Shapiro-Wilk Test. 
+
+9. Construct a 95% confidence interval for the mean weight of such bags of chips. Interpret your interval.
+
+10. Conduct a one-sample t-test to see if there is evidence that the mean weight differs from 28.3 grams. Interpret your results. 
+
+Use the following information for questions 11 through 12. In the `MASS` package, you'll find the data set `anorexia`, which contains data on pre- and post-treatment weights (in pounds) of 72 young women suffering from a disease. One group of women is the control group (no interventional treatment), and the other two groups are the cognitive behavioral program and family support intervention program groups. Let $\mu_d$ denote the mean difference in weight, computed as ($post-weight-pre-weight$). Is this paired data?
+
+MODIFIED #11. 
+A study was undertaken to compare the respiratory responses of hypnotized and nonhypnotized subjects to certain instructions. The 16 male colunteers were allocated at random to an experimental group to be hypnotized or to a control group. Baseline measurements were taken at the start of the experiment. In analyzing the data, the researchers noticed that the baseline breathing patterns of the two groups were different; this was surprising, since all the subjects had been treated teh same up to that time. One explanation proposed for this unexpected difference was that the experimental group were more excited in anticipation of the experience of being hypnotized. The data below containts the baseline measurements of total ventilation (liters of air per minute per square meter of body area). 
+
+```{r}
+experimental <- c(5.32,5.6,5.74,6.06,6.32,6.34,6.79,7.18)
+control<- c(4.5,4.78,4.79,4.86,5.41,5.70,6.08,6.21)
+```
+
+
+
+11. Use a t-test to test the hypothesis of no difference against a nondirectional alternative. Use $alpha = 0.05$. Interpret your results.
+
+
+12. Use a t-test to test the hypothesis of no difference against the alternative that the experimental conditions produce a larger mean than the control conditions. Use $alpha = 0.05$. Interpret your results.
+
+
+11. Regardless of which treatment group the participants fal into, conduct and conclude an appropriate hypothesis test with $\alpha = 0.05$ for the entire set of weights for the following hypotheses:
+\[
+H_0: \mu_d=0\\
+H_a: \mu_d>0
+\]
+
+12. Next, conduct three separate hypothesis tests using the same defined hypothesis, based on which treatment group the participants fall into. What do you notice? 
+
+### Inferences for Proportions
+
+Use the following information to answer questions 13 through 16.
+
+An advertisement for a skin cream claims nine out of ten women who use it would recommend it to a friend. A skeptical salesperson in a department store believes the true proportion of women users who would recommend it, $p$, is much smaller than 0.9. She follows up with 89 random customers who had purchased the skin cream and asks if they would recommend it to others, to which 71 respond yes. 
+
+13. Set up the appropriate hypotheses for this test and determine whether it will be valid to carry out using the noraml distribution. 
+\[
+H_0: p=0.9\\
+H_a: p<0.9
+\]
+
+
+14. Conduct the hypothesis test using `prop.test`.
+
+```{r}
+
+```
+
+
+15. What is your test statistic? What is the P-value? What conclusion do you make based on the P-value?
+
+16. Construct a 90% confidence interval for the true proportion of women who would recommend the skin cream. 
+
+Use the following information to answer questions 17 and 18. 
+
+The political leaders of a particular country are curious as to the proportion of citizens in two of its states that support the decriminalization of marijuana. A small pilot survey taken by officials reveals that 97 out of 445 randomly sampled voting-age citizens residing in state 1 support the decriminalization and that 90 out of the 419 voting-age citizens residing in state 2 support the same notion. 
+
+Letting $p_1$ denote the true proportion of citizens in support of decriminalization in state 1, and $p_2$, similarly for state 2, conduct a hypothesis testing using a 5% significance level to test whether the two proportions differ from each other.
+
+17. Write down the hypotheses:
+
+\[
+H_0: p_2-p_1=0\\
+H_a: p_2-p_1\neq 0
+\]
+
+18. Conduct the test using `prop.test`. 
+
+
+
+19. What is the P-value and what is the conclusion in context?
+
+20. Construct a 95% confidence interval for the difference in proportions and interpret your result. 
+

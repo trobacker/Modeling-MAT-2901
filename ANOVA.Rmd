@@ -1,0 +1,321 @@
+---
+title: "Analysis of Variance"
+author: "Thomas Robacker"
+date: "March 30, 2021"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = T) 
+# You may need install these packages:
+library(car)
+library(dunn.test)
+library(tidyverse)
+```
+
+```{r include=FALSE}
+# Personal computer
+#mugs <- read.csv("C:/Users/AcerPC/Google Drive/WWC Course Material/MAT 2901 MathStat Modeling/R Markdown Files/Mugs.csv", stringsAsFactors = F)
+# Work computer
+mugs <- read.csv("G:/My Drive/WWC Course Material/MAT 2901 MathStat Modeling/R Markdown Files/Mugs.csv", stringsAsFactors=FALSE)
+```
+
+In the previous sections we've described mthods for comparing two populations means and proportions. Often we will be interested in comparing more than two populations means. There are many situations where someone might be interested in doing this. An auto fleet manager may wish to compare average gas mileage for various makes of cars. A farmer may be interested in the average yield of tomato plants with various fertlizers. A nutrionist may want to compare the average weight loss for several different diets. Comparisons of several means can be made using the **one-way ANOVA** *F*-test. **ANOVA** stands for *ANalysis Of VAriance* We'll focus on this topic here.
+
+Let's look at a dataset to have some context. An experimenter wants to know which type of container would keep his hot beverages hot longest. To test this, he heated water to a temperature of 180$^\circ$F, placed it in the container, and then measured the temperature of the water again 30 minutes later. He randomized the order of the trials and tested each contaianer 8 times. His response variable was the difference in temperature (in $^\circ$F) between the initial water temperature and the temperature after 30 minutes. The question we wish to address is: do the four containers maintain temperature equally well?
+
+Let's plot the data in side-by-side boxplots:
+
+```{r echo=TRUE, fig.align='center'}
+attach(mugs)
+boxplot(Difference ~ Container, ylab = "Temperature Change (F)", xlab = "Container", col = c("yellow","blue","red","dark green"))
+```
+
+The commands above attach the data frame `mugs` so that we don't have to use the `$` operator to get out the columns `Difference` and `Container` with it. The next command constructs the boxplot with labels. 
+
+We see that there are quite some clear differences between the center of the temperature distributions for each mug type. In particular, we might hypothesize that the *mean* temperature difference after 30 minutes is different among the mug types. This is exactly what we'll test with an **one-way ANOVA** *F*-test. The null hypothesis we'll form is the claim that the mean temperature difference between all the mug types are equal.
+
+You might think that we could do all of the *pair-wise* two-sample *t*-tests for the mug types to test differences in the means. However, this approach leads to increased Type I errors and what we consider to be a *multiple testing problem*. As we increase the number of hypothesis tests, we increase the chance of receiving an erroneous result. There are ${4}\choose{2}$ combinations of two-sample tests here:
+
+```{r}
+choose(4,2)
+```
+
+That is, 6 different pair-wise tests we could conduct. The probability of observing at least one significant result just due to chance is:
+\[
+P(at\ at least\ one\ significant \ result)=1-P(no\ significant\ results)\\
+= 1-(1-0.05)^6\\
+\approx 26.49%
+\]
+```{r}
+1-(1-0.05)^6
+```
+
+So, there's a decent chance we'll reach a significant test result even though it's not a "real" significant result in 6 tests. There are ways to correct for this, one of which is called the *Bonferroni Correction*. What it suggests is to instead use a modified significance level from your chosen one, $\alpha$, and instead use, $\alpha_N=\alpha/N$ for any interpretation of statistical significance for $N$ tests. Essentially, it reduces the $alpha$ you should use to conclude significance as a factor of the number of tests conducted, $N$. 
+
+
+But all is not lost. Even if the null hypothesis were true, and the means of the populations underlying the groups were equal, we'd still expect some natural variation in the sample means. We could measure that variation by finding the variance of the means. How much should they vary? Well, from the boxplot above, we can see there is quite some variation in the mug types. 
+
+It turns out that we can build a hypothesis test to check whether the variation in the means is bigger than we would expect it to be just from random fluctuations (natural variation). We'll need a new sampling distribution model, called the *F*-model, but that's just a different probability distribution to use or from which to let R do the heavy-lifting. 
+
+The simplest version of ANOVA is referred to as *one-way* or *one-factor* analysis. The one-way ANOVA is used to test two or more means for equality. Those means are split by a categorical *group* or *factor* variable - here that's the type of mug. If we have *k* group means, $\mu_1, \ldots, \mu_k$ then the standard hypotheses are as follows:
+\[
+H_0:\mu_1=\mu_2=\cdots=\mu_k\\
+H_a:\mu_1, \mu_2, \ldots,\mu_k \ \mbox{are not all equal}
+\]
+
+In fact, when $k=2$, the two-sample $t$-test is equivalent to ANOVA; for that reason we use ANOVA when we have more than 2 groups.
+
+The following assumptions need to be satisfied in order for the results of the basic one-way ANOVA test to be considered reliable:
+
+* **Independence** The samples making up the $k$ groups must be independent of one another, and the observations in each group must be independent and identically distributed (iid).
+
+* **Normality** The observations in each group should be normally distributed, or at least approximately so. 
+
+* **Equality of variances** The variance of the observations in each group should be equal, or at least approximately so.
+
+If the assumptions of equality of variances or normality are violated, it doesn't necessarily mean your results will be completely worthless, but it will impact the overall effectiveness of detecting a true difference in the means. It's always a good idea to asses the validity of these assumptions before using ANOVA. It's also worth noting that you don't need to have an equal number of observations in each group to perform the test (in which case we refer to is as *unbalanced*). Having unbalanced groups does render the test more sensitive to potentially detrimental effects if the assumption of equal variances and normality are not sound.
+
+Let's return to the mugs data. Below is the sample mean for each container type:
+
+```{r echo=TRUE, fig.align='center'}
+mug.means <- tapply(mugs$Difference, INDEX = mugs$Container, FUN = mean)
+mug.means
+```
+
+Inspecting our means and referring to the boxplot we created earlier, it certainly looks as though there's a difference in the mean temperature loss. The hypotheses for the ANOVA test look like the following:
+\[
+H_0:\mu_{\mbox{CUPPS}}=\mu_\mbox{Nissan}=\mu_{\mbox{SIGG}}=\mu_{\mbox{Starbucks}}\\
+H_a:\mbox{The means are not all equal}
+\]
+
+Assuming randomization and independence we should check that the other assumptions are valid. There is a more formal test for equality of variances such as Levene's Test but you may also the the basic rule of thumb which is to check that the ratio of the largest sample standard deviation to the smallest is less than 2. The following code will test for normality:
+
+```{r echo=TRUE, fig.align='center'}
+library(car)
+leveneTest(mugs$Difference, group = mugs$Container)
+```
+
+Here, they null hypothesis is that the variances for each group *are equal*. Since the P-value of this test is greater than 0.05 we have evidence that the data may have equal variances. 
+
+Next, we'll check for normality. We could make normal probability plots for each group's data and investigate them visually. We can also do a Shapiro-Wilk test for normality on each group. We do this as follows:
+
+```{r echo=TRUE, fig.align='center'}
+tapply(mugs$Difference, INDEX = mugs$Container, FUN = shapiro.test)
+```
+
+Here, the null hypothesis of the Shapiro-Wilk test is that the data *are* normally distributed. We see that most of the P-values are above 0.05 except the first one which is 0.02538. For now, we'll say that this is not *overwhelming* evidence of non-normality in the CUPPS data and we'll proceed with our ANOVA test. 
+
+## One-Way ANOVA Table Construction
+
+Turning our attention back to the data, remember that the goal is to statistically evaluate the equality of the means for each group (mug type). This task will require us to consider not only the variability *within* each of the 4 groups but the variability *between* the groups. This is why we call this test an analysis of variance.
+
+The test proceeds by first calculation various metrics associated with the overall variability and then the within- and between-group variability. These involve sums of squared quantities and associated degree of freedom calculations. All of this culminates in a single test statistic (the *F*-statistic) and a *P*-value relative to the hypotheses. These results are typically presented in a table. 
+
+The following code generates an ANOVA table for the mugs data set:
+
+```{r echo=TRUE, fig.align='center'}
+mugs.anova <- aov(Difference ~ Container, data = mugs)
+summary(mugs.anova)
+```
+
+Notice the degrees of freedom column, `Df`, contains for the factor row is calculated as $k-1=(4)-1=3$ while the `Residuals` is calculated as $N-k=(32)-(4)=28$. The next column `Sum Sq` is called the sum of squares column. The `Mean Sq` column is called the sum-of-squared-errors column. The next column `F value` is the *F*-statistic from the test. The test statistic, $F$, is found by dividing the mean squared group (MSG) effect by the mean squared error (MSE) effect. Finally, we have a *P*-value for our ANOVA. 
+
+Now, for each row, we can think of them in a little more detail:
+
+* **Group row/Factor Row** This relates to the data in the individual groups of interest, thereby accounting for the *between-group variability*. (The first row on the table)
+
+* **Error row/Residual row** This accounts for the random deviation from the estimated means of each group, thereby accounting for the *within-group variability*. (The second row on the table)
+
+* ***F*-statistic** This is found by finding the *ratio* of the mean squared group (MSG) effect by the mean squared error (MSE) effect. That is, the ratio of the first to the second row entries of the `Mean Sq` column in the ANOVA table. The larger the *F*-statistic, the more evidence we'll have against the null hypothesis. 
+```{r}
+Fstat<-238.06/22.22
+Fstat
+```
+
+* ***P*-value** The *P*-value is calculated by finding the upper-tail area of *F* on the corresponding *F* distribution which requires two degrees of freedom: the group degrees of freedom, $df_1=k-1$, and the error degrees of freedom,$df_2=N-k$. 
+
+```{r}
+pval<-pf(Fstat, df1 = 3, df2 = 28, lower.tail = F)
+pval
+```
+
+
+
+Given the hypotheses 
+\[
+H_0:\mu_{\mbox{CUPPS}}=\mu_\mbox{Nissan}=\mu_{\mbox{SIGG}}=\mu_{\mbox{Starbucks}}\\
+H_a:\mbox{The means are not all equal}
+\]
+for our context and the *P*-value of `7.33e-05`, what do we conclude?
+
+Since the *P*-value is less than $\alpha = 0.05$ (or $0.01$ for that matter) we reject the null hypothesis that the mean temperature loss across the different types of mugs are equal.
+
+In the next section(s) we'll work with a two-way ANOVA and learn a post-hoc test to gain insight into concluding *where* the significant differences may lie and are realized. We'll also see how to use the *Kruskal-Wallis Test* if we violate normality in our sample groups.
+
+### Exercise
+
+We desire to see if there's a difference between chick weights based on their feed, from a dataset called `chickwts` in R. 
+
+* Inspect the `chickwts` dataframe and calculate the mean weight for each feed group. 
+
+```{r}
+attach(chickwts)
+tapply(weight, INDEX = feed, FUN = mean)
+```
+
+
+
+* Construct side-by-side boxplots for the weight based on the food groups, do you believe there is a significance difference between the groups?
+
+```{r}
+boxplot(weight ~ feed, 
+        main = "Chick Weight by Feed Type",
+        ylab = "Weight (grams)", 
+        col = rainbow(6))
+```
+
+
+
+* Use the Shapiro-Wilk test to check for normality of each feed group's weight.
+
+```{r}
+tapply(weight, INDEX = feed, FUN = shapiro.test)
+```
+
+All the P-values across each feed type for the Shapiro-Wilk test are greater than (by quite a bit) alpha of 0.05. So, it's reasonable to assume the groups may come from a normal population. 
+
+* Use Levene's Test to check for equality of variance between the feed groups.
+
+```{r}
+#library(car)
+leveneTest(weight, group = feed)
+```
+
+Since the P-value is larger than 0.05, we can safely assume that the variance between each group is about the same (equality of variances). We can proceed with our ANOVA :D
+
+
+* Construct the one-way ANOVA table and identify the P-value
+
+```{r}
+chick.anova <- aov(weight ~ feed, data = chickwts)
+summary(chick.anova)
+```
+
+Manual calculation of F:
+
+```{r}
+Fstat<- 46226/3009
+Fstat
+```
+
+Manual calculation of P-value:
+
+```{r}
+pval<-pf(Fstat, df1 = 5, df2 = 65, lower.tail = F)
+pval
+```
+
+
+* What is your contextual conclusion based on the ANOVA test? 
+
+With a P-value much smaller than 5% or even 1%, we have strong evidence that the true mean weights differs between these feed groups. It does *not* tell us which one we should use, but we inspect the boxplot to make the obvious choice for leaner or more massive chickens. 
+
+## Tukey Honest Significant Difference 
+
+After conducting our ANOVA, we may find that there is significant evidence for a difference among the populations means. In this situation, we are often interested in a detailed analysis of the sample means considering all pairwise comparisons. One popular method for doing this is Tukey's Honest Significant Difference. Let's review the ANOVA from our coffee mugs data first:
+
+```{r}
+summary(mugs.anova)
+```
+
+What is the conclusion we made?
+
+Here's how we can perform a Tukey Honest Significant Difference (Tukey's HSD) in R: we supply an ANOVA object:
+
+
+```{r}
+TukeyHSD(mugs.anova)
+```
+
+We see that, at the 5% significance level, there are significant (pairwise) differences between the Nissan and CUPPS mugs, the SIGG and Nissan mugs, and the Starbucks and Nissan mugs. In addition, there is supplied a 95% confidence interval for each pairwise difference. Compare these differences with our side-by-side boxplots.
+
+### Exercise
+
+Perfrom Tukey's HSD on the chick weight dataset and interpret your output.
+
+```{r}
+TukeyHSD(chick.anova)
+```
+
+## Kruskal-Wallis Test
+
+When comparing multiple means, there may be situations when we're unwilling to assume normality or have even found the assumption of normality invalid in diagnostic checks (e.g. Shapiro-Wilk test). In this case, we could use the *Kruskal-Wallis test*, an alternative to the one-way ANOVA that relaxes the dependence on the necessity for normality. This method tests for "equality of distributions" of the measurements in each level of the grouping factor. If we make the usual assumptions of equal variances across these groups (or test for it with Levene's test), we can think of this test as one that compares multiple medians rather than means. 
+
+The hypotheses governing the test alter accordingly:
+
+\[
+H_0: \mbox{Group median are all equal}\\
+H_a: \mbox{Group median are not all equal}
+\]
+
+The Kruskal-Wallis test is a *nonparametric* approach since it does not rely on quantiles of a standardizes parametric distribution (e.g. the normal distribution) or any of its functions. In the same way that the ANOVA is the generalization of the two-sample t-test, the Kruskal-Wallis ANOVA is a generalization of the Mann-Whitney test for two medians. It's also referred to as the Kruskal-Wallis *rank-sum* test, and we use the $\chi^2$ distribution to calculate the p-value. 
+
+Let's turn our attention to the data frame `survey` in the the `MASS` package. 
+
+```{r}
+library(MASS)
+summary(survey)
+```
+
+These data record particular characteristics of 237 first-year undergraduate statistics students at the University of Adelaide, South Australia. 
+
+Suppose we're interested to see whether the age of the students, `Age`, tends to differ with respect to four smoking categories reported in `Smoke`. An inspection of the relevant side-by-side boxplots and Shapiro-Wilk tests suggests that a straightforward ANOVA may be inappropriate:
+
+```{r}
+survey_complete<-drop_na(survey)
+
+ggplot(survey_complete, aes(x = Smoke, y = Age, fill = Smoke)) + 
+  geom_boxplot()
+
+survey_complete %>% 
+  group_by(Smoke) %>%
+  summarize(mean = mean(Age))
+```
+
+```{r}
+#tapply(Age, INDEX = Smoke, FUN = shapiro.test)
+
+survey_complete %>% 
+  group_by(Smoke) %>%
+  summarize(SWpvalue = shapiro.test(Age)$p.value)
+```
+
+We see that non of the factor groups seems to potentially normally distributed according to the Shapiro-Wilk tests (we reject the null hypothesis of normality in each case). Let's check for equality of variances:
+
+```{r}
+leveneTest(survey_complete$Age, group = survey_complete$Smoke)
+```
+
+We have evidence that the assumption of equal variances is reasonable. 
+
+Let's perfrom the Kruskal-Wallis test:
+
+```{r}
+survey.kruskal <- kruskal.test(Age ~ Smoke, data = survey_complete)
+survey.kruskal
+```
+
+The syntax is the same as for `aov`. As you might suspect from the boxplots, the large p-value suggests there's no evidence against the null hypothesis that states that the medians are all equal. That is, there doesn't seem to be an overall age difference between the students in the four smoking categories. 
+
+We cannot use Tukey's HSD after this Kruskal-Wallis test because we've not met the assumptions of normality in the factor groups. Instead, we'll use Dunn's test, which may be understood as a test for median difference for pairwise comparison. Note that is also performs the Kruskal-Wallis test. We specify the response variable, then the group factors, and the multiple-comparisons method here as `bonferroni`.
+
+```{r}
+dunn.test(survey_complete$Age, survey_complete$Smoke, method = "bonferroni")
+```
+
+The output shows the point estimate for the median difference between the pairwise grouping variables and a P-value to decide if it's significant. In each case, we do not have evidence that there is a difference between the pairwise comparisons. 
+

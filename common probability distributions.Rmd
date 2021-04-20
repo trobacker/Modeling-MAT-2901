@@ -1,0 +1,385 @@
+---
+title: "Common Probability Distributions"
+author: "Thomas Robacker"
+date: "March 4, 2021"
+#css: styles.css
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In this section, we'll look at a number of commonly used probability distributions for use in statistical modeling. We broadly categorize the distributions as either discrete or continuous. Each distribution hsa four core R functions associated to it: a `d`-function, providing specific mass or density function values; a `p`-function, providing cumulative distribution probabilities; a `q`-function, providing quantiles; and and `r`-function, providing random variate generation. 
+
+## The Bernoulli Distribution
+
+The *Bernoulli* distribution is the probability distribution of a discrete random variable that has only two possible outocmes, such as success or failure. This type of variable is referred to as *binary* or *dichotomous*. 
+
+Let's say we've defined a binary random variable, $X$, for the success or failure of an event, where $X=0$ is failure, $X=1$ is success, and $p$ is the known probability of success. Then we have the distribution as shown:
+
+| x         | 0 | 1 |
+| ---- | ---- | ---- |
+| $P(X=x)$  | $1-p$ | $p$ | 
+
+In mathematical terms, for a discrete random variable $X=x$, the Bernoulli mass function $f$ is
+\[
+f(x)=p^x(1-p)^{1-x}; \quad x\in \{0,1 \}
+\]
+where $p$ is a *parameter* of the distribution. The notation 
+\[
+X \sim BERN(p)
+\]
+is often used to indicate that "$X$ follows a Bernoulli distribution with parameter $p$."
+
+The mean and variance are defined as follows, respectively:
+\[
+\mu_X =p \qquad \mbox{and} \qquad \sigma_X^2=p(1-p)
+\]
+
+Say we roll a D6 die, with success defined as getting a 4, and we roll *only once*. You therefore have a binary random variable $X$ that can be modeled using the Bernoulli distribution , with the probability of success $p=1/6$. For this example, $X\sim BERN(1/6)$. So, 
+\[
+P(rolling\ a\ 4)=P(X=1)=\left(1/6\right)^1(5/6)^0=1/6
+\]
+and note that, $f(0)=5/6$ and $f(1)=1/6$. Furthermore, we have $\mu_x=1/6$ and $\sigma_X^2 =1/6\times 5/6=5/36$.
+
+## The Binomial Distribution
+
+The *binomial distribution* is the distribution of successes in *n* number of trials involving binary discrete random variables. The role of the Bernoulli distribution is typically one of a "building block" for more complicated distributions such as the binomial. 
+
+For example, suppose we define a random variable $X=\sum_{i=1}^n Y_i$, where each $Y_i$ is a Bernoullie random variable corresponding to the same event, such as rolling a 4 on a D6. The new random variable $X$, a sum of Bernoulli random variables, now describes *the number of successes in $n$ trials* of the defined action. Providing that certain assumptions are satisfied, the probability distribution that describes this success count is the binomial distribution. 
+
+In mathematical terms, for a discrete random variable and a realization $X=x$, the binomial mass function $f$ is 
+\[
+    f(x)={n\choose{x}}p^x(1-p)^{n-x};\quad x\in\{0,1,\ldots,n\}
+\]
+where 
+\[
+{n\choose{x}}=\frac{n!}{x!(n-x)!}
+\]
+is the *choose function* or *binomial coefficient*. This coefficient, also referred to as a *combination*, accounts for all different orders in which you might observe $x$ successes throughout $n$ trials. 
+
+The parameters of the binomial distribution are $n$ and $p$, and the notation 
+\[
+X\sim BIN(n,p)
+\]
+is often used to indicate that $X$ follows a binomial distribution for $n$ trials with parameter $p$. 
+
+It's important to remember:
+
+* $X$ can only take on the values $0, 1,\ldots, n$ and represents the total number of successses. 
+
+* $p$ should be interpreted as "the probability of success at each trial."
+
+* Each of the $n$ trials is a Bernoulli success and failure event, the trials are independent, and $p$ is constant. 
+
+The mean and variance are:
+\[
+\mu_X = np \qquad \sigma_X^2=np(1-p)
+\]
+
+sometimes we write the probability of failure as $q=1-p$. 
+
+Let's do an example. Suppose we roll a D6 independently eight times, what is the probability of observing exactly five successes (five 4's) in total? Well, we have $X\sim BIN(8,1/6)$, and we can find this probability mathematically as:
+\[
+P(X=5)={8\choose{5}}(1/6)^5(5/6)^{3}\approx 0.004
+\]
+The result tells us there is approximately a 0.4 percent chance that you'll observe exactly five 4s in eight rolls of the die. 
+
+Fortunately, R functions will handle these arithmetic situations! We have the following functions to summarize this:
+
+* `dbinom` directly provides the mass function probabilities $P(X=x)$ for any valid $x$, that is $0\leq x\leq n$. 
+
+* `pbinom` provides the cumulative probability distribution: given $x$, it yields $P(X\leq x)$.
+
+* `qbinom` provides the *inverse* cumulative probability distribution (also known as the *quantile function* of the distribution): given a valid probability $0\leq p\leq 1$, it yields the value of $x$ that satisfies $P(X\leq x)=p$. 
+
+* `rbinom` is used to generate any number of realizations of $X$ given a specific binomial distribution. 
+
+### The `dbinom` Function
+
+We can find the $P(X=5)$ on D6 as follows:
+```{r}
+dbinom(x=5, size=8, prob = 1/6)
+```
+
+To use `dbinom` we specify $x$, the number of trials $n$, as `size`, and the probability of success at each trial, $p$, as $prob$. We could get the probability mass function table for $X$ by supplying a vector of $x$ values:
+
+```{r}
+X.prob <- dbinom(x=0:8, size=8, prob = 1/6)
+X.prob
+```
+
+and confirm they sum to 1:
+
+```{r}
+sum(X.prob)
+```
+
+We could tidy this up a little with the `round` function:
+
+```{r}
+round(X.prob, 3)
+```
+
+The achievement of one success in eight trials has the highest probability. Furthermore the mean and variance of $X$ are:
+
+```{r}
+n=8
+p=1/6
+mu<- n*p
+variance<-n*p*(1-p)
+mu
+variance
+```
+
+We can plot the distribution too:
+
+```{r}
+barplot(X.prob, names.arg = 0:8,
+        space=0,
+        xlab="x",
+        ylab="P(X=x)")
+```
+
+### The `pbinom` Function
+
+The other R functions for the binomial distribution work in much the same way. For example, the probability we observe three or fewer 4s, $P(X\leq 4)$ can be found quickly:
+
+```{r}
+## Using dbinom
+sum(dbinom(x=0:3,size=8,prob=1/6))
+## Or pbinom
+pbinom(q=3,size=8,prob=1/6)
+```
+
+Note that the pivotal argument to `pbinom` is `q`, not `x`: this is because we're searching for a probability based on a quantile. Notice that `pbinom` finds cumulative probabilities *below* or *to the left* of the specified value `q`. We could use this to find an "upper tail" probability too: let's find the probability we observe *at least* three 4s in eight rolls of the die, $P(X\geq 3)=P(X>2)$:
+
+```{r}
+1 - pbinom(q=2, size=8,prob=1/6)
+```
+
+### The `qbinom` Function
+
+The `qbinom` function is the inverse of `pbinom`. Where `pbinom` provides a cumulative probability given a quantile value, `qbinom` provides a quantile value given a cumulative probability, $p$. For example:
+
+```{r}
+qbinom(p=0.95, size = 8, prob = 1/6)
+```
+provides 3 as a quantile value. This is, approximately, the outcome it requires to have a 95\% cumulative probability of success is an outcome of 3. We'll use the `p` and `q`-functions more when dealing with continuous probability distributions. 
+### The `rbinom` Function
+
+Lastly, the random generation of realizations fo a binomially distributed variable is retrieved using the `rbinom` function. For instance:
+
+```{r}
+rbinom(n=1,size=8,prob=1/6)
+rbinom(n=1,size=8,prob=1/6)
+rbinom(n=1,size=8,prob=1/6)
+rbinom(n=3,size=8,prob=1/6)
+```
+
+Notice here that the the initial argument $n$ doesn't refer to the number of trials but how many *realizations* to generate from the given binomial parameters. The `size` refers to how many trials are done in the binomial situation with probability $p$ given by $prob$. The first three commands produce a single realization while the last provides 3. As these are *randomly generated realizations*, if you run these now, you'll probably observe different values. 
+
+Other common discrete probability distributions include Poisson, geometric, negative binomial, hypergeometric, and multinomial. We'll describe these as necessary in the future. 
+
+The binomial model in action: [Why do airlines sell too many tickets?](https://www.youtube.com/watch?v=ZFNstNKgEDI)
+
+## Common Probability Density Functions
+
+When considering continuous random variables, you need to deal with probability *density* functions. There are many we'll consider in the future but we're going to focus on the *normal* distributions here. 
+
+### The Normal Distributions
+
+The *normal distributions* are among the most widely applied and well-known probability distributions in modeling continuous random variables. We'll think of a normal distribution as a model for a unimodal, symmetric, and bell-shaped distribution of some quantitative variable. We'll see as we continue our study of statistics that this distribution plays a crucial role in statistical inference.
+
+Below is an example of a normal distribution. It is known that IQ scores approximately follow the a normal model with mean 100 and standard deviation 15. We see that most IQ scores are around 100 and as we look to lower or higher IQ scores the proportion of people in those areas descresases according to the density curve. A convenient way to think of what a density curve represents is imagining that underneath there is a histogram whose shape closely resembles the shape of the density curve.
+
+```{r echo=FALSE, fig.align='center'}
+mu=100;sigma=15
+domain=mu-3*sigma:mu+3*sigma
+z<-seq(mu-3*sigma,mu+3*sigma,length = 300)
+fx<- dnorm(z,mean = mu,sd = sigma)
+plot(z,fx,type = "l",xlim = c(mu-3*sigma,mu+3*sigma),main="The N(100,15) Distribution", xlab = "IQ Scores",ylab = "Density Curve")
+abline(h = 0, col = "gray")
+```
+
+The notation we use to indicate that a quantitative variable has a normal distribution is $N(\mu,\sigma)$, where $\mu$ is the mean and $\sigma$ is the standard deviation. We learned previously that the mean and standard deviation are the measures of center and spread, respectively, we prefer to summarize a symmetric distribution. 
+
+**Note:** To paraphrase George Box, "All models are wrong, but some are useful." When we look at data and ask ourselves if it follows a normal distribution, it probably won't fit to that standard exactly. In many cases though, such a model is a good summary and approximation to what often happens as we take (usually large) sets of data. We'll look at a way to assess normality towards the end of this tutorial. 
+
+## The Standard Normal Distribution
+
+Of all the infinitely many normal distributions, the most well-known one is the *standard normal distribution*. This distribution is $N(0,1)$. That is a normal distribution with mean 0 and standard deviation 1. 
+
+Recall that a **z-score**, or **standardized value**, is the number of standard deviations a data point is from the mean. More formally it's a measure of how many standard deviations a raw score falls above or below the population mean. The types of questions we often ask in using the normal model is what proportion of our data or values following the model fall above or below a specified value. Whenever we calculate a z-score for a particular value $x$ on a normal distribution using the formula
+\[
+z=\frac{x-\mu}{\sigma}
+\]
+we are transforming our question from some generic $N(\mu,\sigma)$ distribution and transforming it to the standard normal distribution $N(0,1)$. In a sense it's like taking infinitely many possibilities (imagine all the different calculations you might need to compute depending on numerous possible means and standard deviations) and reducing them to simply working with the standard normal distribution. This is why we use the standard normal table when working exercises by hand in statistics found in the back of so many textbooks.
+
+Let's work an example out 'by hand.'
+
+**Example:** It is known that IQ scores approximately follow a $N(100,15)$ model. Find the proportion of IQ scores that are below 110.
+
+**Solution:** First we draw what we're trying to find below. The magenta shaded area is the proportion of interest. The objective is to find the proportion of IQ scores below 110. 
+
+```{r echo=F, fig.align='center'}
+mu=100;sigma=15
+domain=mu-3*sigma:mu+3*sigma
+z<-seq(mu-3*sigma,mu+3*sigma,length = 300)
+fx<- dnorm(z,mean = mu,sd = sigma)
+plot(z,fx,type = "l",xlim = c(mu-3*sigma,mu+3*sigma),main="The N(100,15) Distribution", xlab = "IQ Scores",ylab = "Proportion (Density)")
+abline(h = 0, col = "gray")
+
+# Fill in the cumulative proportion
+lowbd<-mu-5*sigma
+highbd<-110
+xvals_sub<- z[z>=lowbd & z<=highbd]
+fx_sub<- fx[z>=lowbd & z<=highbd]
+polygon(rbind(c(lowbd,0),cbind(xvals_sub,fx_sub),c(highbd,0)),border=NA,col="magenta")
+
+#Place x-value and text
+abline(v=110,lty=2)
+text(116,0.022,labels = "x = 110")
+
+arrows(70,0.022,90,0.005)
+text(72,0.024,labels = "Proportion of scores below 110")
+```
+
+To represent this quantity mathematically, we use the notation $P(x<110)$. This notation can be read as 'the proportion of IQ scores, $x$, below 110.' The $<$ symbol can be replaced with $\leq$ too, they are equivalent in this context. 
+
+Since we have the model $N(100,15)$, let's calculate the z-score for the IQ score 110. The z-score is
+\[
+z=\frac{110-100}{15}\approx 0.67
+\]
+to two decimal places. We rounded to two decimal places since many standard normal tables do so. Looking this z-score up in a standard normal table we find that $P(z<0.67)=0.7486$, that is, *the proportion of z-scores below 0.67* is about 0.7486. We know this is equivalent to the original question of finding $P(x<110)$, that is, the proportion of IQ scores below 110. Thus
+\[
+P(x<110)=P(z<0.67)=0.7486
+\]
+We conclude that about 74.86% of IQ scores are below 110. $\Box$
+
+## Using R to Find Normal Percentiles
+
+### The pnorm Function
+
+Let's see how we can solve problems similar to the previous example using R. The function we'll implement is `pnorm`. The command is built-in to R and there are no additional packages required for this function. This function obtains left-sided proportions (or probabilities) under the specified normal distribution. 
+
+The `pnorm` function's arguments look like the following:
+
+`pnorm(q, mean = 0, sd = 1, lower.tail = T, log.p = F)`
+
+By default, R automatically sets the mean and standard deviation to 0 and 1, respectively, which is indicated as `mean = 0` and `sd = 1` above. The argument `q` is a single or vector quantity of quantiles (usually a $z$-score or a specific $x$-value we desire to use). 
+
+**Example:** Find the proportion of $z$-scores to the left of $z = 2/3$ and $z=0.67$.  
+
+```{r}
+pnorm(2/3)
+pnorm(0.67)
+```
+The command `pnorm(2/3)` gives us a more precise result of the previous example we worked by hand. The command `pnorm(0.67)` gives us the result we would obtain by hand. $\Box$ 
+
+Let's look at the IQ scores again another way. Though we know that we can transform our IQ score of 110 to a $z$-score, we can let R do all the heavy lifting for us. The following R command also finds the proportion of IQ scores below 110:
+```{r}
+pnorm(110,mean = 100,sd = 15)
+```
+This is exactly the same result as the command `pnorm(2/3)`.
+
+The other arguments to the function `pnorm` are `lower.tail = T` and `log.p = F`. The `lower.tail = T` argument indicates that it will find the area under the specified normal distribution to the left (the lower tail). Changing this to `TRUE` or just `T` gives you the opposite side. The argument `log.p = F` will not be discussed for our purposes here. 
+
+**Example:** Find the proportion of IQ scores above 110 using the model $N(100,15)$.
+
+**Solution:** One way to calculate this is the following
+
+```{r}
+1-pnorm(110, mean = 100, sd = 15)
+```
+This is probably what we do by hand if our standard normal table reads to the left. Otherwise, we could do this:
+```{r}
+pnorm(110, mean = 100, sd = 15, lower.tail = F)
+```
+Thus the proportion of IQ scores above 110 is about 25.25%. $\Box$
+
+Let's do one more example.
+
+**Example:** Find the proportion of IQ scores between 80 and 120 using the model $N(100,15)$.
+
+**Solution:** We use the following command in R:
+```{r}
+pnorm(120, mean = 100, sd = 15)-pnorm(80, mean = 100, sd = 15)
+```
+Thus the proportion of IQ scores between 80 and 120 is about 81.76%. $\Box$
+
+### The qnorm Function
+
+We can use the `qnorm` function to find the quantile value (an $x$-value or $z$-value on the standard normal) that will give us a lower-tail proportion (or probability) of a specified value `p`. This is what we often call an inverse or reverse problem from the previous section using `pnorm`. Let's start with an example.
+
+**Example:** Find the IQ score that marks off the bottom 25% of all IQ scores using the model $N(100,15)$.
+
+**Solution:** Using the following command gives us the correct answer:
+```{r}
+qnorm(0.25, mean = 100, sd = 15)
+```
+Thus an IQ score of about 90 marks off the bottom 25% of all IQ scores. The arguments `qnorm` are the same as `pnorm` except that we specify a quantile instead of a proportion. 
+
+**Example:** The MENSA organization, often reffered to as the 'high IQ society' allows membership for those who are among the top 2% of all IQ scores. Find the IQ score that marks off the top 2% of all IQ scores using the model $N(100,15)$.
+
+**Solution:** Using R, we have
+```{r}
+qnorm(0.02, mean = 100, sd = 15, lower.tail = F)
+```
+Thus an IQ score of about 131 or higher puts one's IQ score in the top 2% of all IQ scores. $\Box$
+
+## Assessing Normality and The rnorm Function
+
+### The rnorm Function
+
+Often times in modeling we desire to simulate randomness or generate random data (synthetic data). We'll cover randomness is more detail in a future tutorial. 
+
+The `rnorm` function simulates values drawn from any given normal distribution. For example, the command
+```{r}
+rnorm(n=4)
+```
+produced four random numbers from the standard normal distribution $N(0,1)$. We could also specify the mean and standard deviation; the line
+```{r}
+rnorm(n=4, mean = 100, sd = 15)
+```
+produces four random numbers drawn from the $N(100,15)$ model which we might use to represent four randomly drawn IQ scores.
+
+### Assessing Normality
+
+Let's examine a utility we may use to assess whether a data set is approximately normally distributed. The utility is called a *normal probability plot* or *normal quantile plot*. A normal probability plots data against a theoretical normal distribution the data would have given its mean and standard deviation in such a way that the points should form a line.  Departures from this line indicate departures from normality. The built-in function, `qqnorm`, takes in our raw data and produces a normal probability plot. 
+
+Let's work with some synthetic data. Let's simulate 1000 randomly drawn IQ scores from $N(100,15)$ and store it in `iq`. 
+```{r}
+set.seed(1)
+iq <- rnorm(n = 1000, mean = 100, sd = 15)
+```
+
+The `set.seed(1)` function sets the random number generator to a specific state called a *seed*. This ensures we each have the same set of data and see the same graphics. The data being normally distributed is evidenced by plotting a histogram:
+
+```{r fig.align='center'}
+hist(iq, main = "Histogram of Synthetic IQ Scores", xlab = "IQ Score", ylab = "Count", col = "light green")
+```
+
+We use the `qqnorm` function to produce the normal probability plot and the `qqline` function to graph the "optimal" line that the ordered pairs would lie along if the data were perfectly normal.
+```{r fig.align='center'}
+qqnorm(iq)
+qqline(iq)
+```
+
+Since the ordered pairs on the normal probability plot seem to fit closely to the straight line plotted the assumption of normality isn't unreasonable. A note: we can't exactly say that the data *are* normally distributed but we do have pretty strong evidence of it (and the fact that we know we generated this from a normal distribution). We'll discuss this logic more when we explore hypothesis testing. We will also have even more ways to assess normality including the Anderson-Darling or Shapiro-Wilk normality tests.
+
+### Other Probability Density Functions
+
+Here we've focused exclusively on the normal distributions. However, we'll encounter many others including the $t$, $F$ and $\chi^2$ distributions in the future. By understanding well the most common ones, we'll be able to quickly adapt to new ones in the future. 
+
+
+
+
+
+
+
+
+

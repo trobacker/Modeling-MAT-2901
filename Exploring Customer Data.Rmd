@@ -92,7 +92,7 @@ The distribution of age seems to be symmetric and somewhat normally distributed,
 
 ```{r}
 ggplot(customer_data, aes(x = age)) +
-  geom_histogram(binwidth = 5, fill = "gray", color = 'black')
+  geom_histogram(binwidth = 5, fill = "gray", color = 'black') + theme_minimal()
 ```
 
 ```{r}
@@ -189,13 +189,20 @@ Describe what you see above.
 HexBinPlot(customer_data2, "age", "income", "income as a function of age") + geom_smooth(color = "black", se=F)
 ```
 
+```{r}
+ggplot(customer_data2, aes(x = age,y = income)) +
+  geom_hex(alpha = 0.8) + 
+  scale_fill_gradient(low="blue", high="red") + 
+  theme_minimal() + geom_smooth(color = 'black')
+```
+
 
 
 The variable `health.ins` has a logical value. A scatterplot of the data may not seem informative, but a smoothing curve can estimate the average value of the T/F variable as a function of age. This is a logistic regression which we'll learn later on. 
 
 ```{r}
 BinaryYScatterPlot(customer_data, "age", "health.ins",
-                   title = "Probability of health insurance by age")
+                   title = "Probability of health insurance by age") + theme_minimal()
 ```
 
 Let's examine the relationship between marital status and the probability of health insurance coverage. The most straightforward way to visualize this is with a stacked bar chart.
@@ -203,28 +210,28 @@ Let's examine the relationship between marital status and the probability of hea
 
 ```{r}
 ggplot(customer_data, aes(x=marital.stat, fill =health.ins)) + 
-  geom_bar()
+  geom_bar() + theme_minimal()
 ```
 
-This chart makes it easy to compare the total number of people in each marital category, and to compare the number of uninsured people in each marital category. However, we can't directly compare the number of insured people in each category, because teh bars don't all start at the same level. So we might prefer a side-by-side bar plot of both insured and uninsured across categories - but not the total number of people in each category.
+This chart makes it easy to compare the total number of people in each marital category, and to compare the number of uninsured people in each marital category. However, we can't directly compare the number of insured people in each category, because the bars don't all start at the same level. So we might prefer a side-by-side bar plot of both insured and uninsured across categories - but not the total number of people in each category.
 
 ```{r}
 ggplot(customer_data, aes(x=marital.stat, fill =health.ins)) + 
-  geom_bar(position = 'dodge')
+  geom_bar(position = 'dodge') + theme_minimal()
 ```
 
 If you want to compare the number of insured and unisured people across categories, while keeping a sense of the total number of people in each category, one plot to try is what we call a shadow plot. It creates two graphs, one for the insured population and one for the uninsured population. Both graphs are superimposed against a "shadow graph" of the total population. This allows comparison both across and within marital status categories. 
 
 ```{r}
 ShadowPlot(customer_data, "marital.stat","health.ins",
-           title = "Health insurance status by marital status")
+           title = "Health insurance status by marital status") + theme_minimal()
 ```
 
-The main shortcoming of the previous charts is that one can't easily compare teh ratios of insured to uninsured across categories, especially for rare categories like widowed. Let's make a filled bar chart to visualize the ratios directly.
+The main shortcoming of the previous charts is that one can't easily compare the ratios of insured to uninsured across categories, especially for rare categories like widowed. Let's make a filled bar chart to visualize the ratios directly.
 
 ```{r}
 ggplot(customer_data, aes(x=marital.stat, fill =health.ins)) + 
-  geom_bar(position = 'fill')
+  geom_bar(position = 'fill') + theme_minimal()
 ```
 
 In the above charts, we've had one of the variables being binary. We apply the same plots to two variables that each have several categories, but the results can be harder to interpret. Let's look at the distribution of marriage status across housing types. 
@@ -235,15 +242,15 @@ cdata <- customer_data %>%
 
 ggplot(cdata, aes(x = housing.type, fill = marital.stat)) + geom_bar(position = 'dodge') +
   scale_fill_brewer(palette = "Dark2") + 
-  coord_flip()
+  coord_flip() + theme_minimal()
 ```
 
 Let's facet wrap the housing type instead:
 ```{r}
 ggplot(cdata, aes(x = marital.stat)) + 
-  geom_bar(fill = "darkgray") +
+  geom_bar(aes(fill = marital.stat)) +
   facet_wrap(~ housing.type, scale = "free_x") +
-  coord_flip()
+  coord_flip() + theme_minimal() 
 ```
 
 ```{r}

@@ -1,0 +1,38 @@
+---
+title: "Assignment 9"
+author: "Your Name"
+date: "Due: Tuesday, April 13, midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+### One-Way ANOVA
+
+The data contained in "arch_data" on Moodle provide the depths (in centimeters) at which important archaeological finds were made at four sites in New Mexico. 
+
+1. Produce side-by-side boxplots of the depths split by group, add some color, labels, and titles. 
+
+2. Assuming independence, excecute the diagnostic checks for normality and equality of variances, interpret your findings. 
+
+3. Perform and conclude a one-way ANOVA test for evidence of a difference between the means. 
+
+4. Perform the Tukey HSD and interpret any significant findings. 
+
+(5 through 8). Conduct the same procedures for a dataset of your choosing from Kaggle. Recall, for a one-way ANOVA you should have a quantitative response variable split by a factor variables with more than 2 groups. Do not use the Pokemon data from the midterm. You may use your Project 1 data if it's applicable. Ideally, we should not perform ANOVA on *population* data but on sample data from a population, that's why I don't want you to use the Pokemon dataset because it contains all pokemon. If necessary, perform the Kruskal-Wallis test instead of using the usual `aov()` function based on your diagnostic checks. 
+
+### Two-Way ANOVA
+
+From the `MASS` package you'll use the `Cars93` dataset, which contains detailed data on 93 cars for sale in the United States in 1993. Let the response variable of interest be the `Length` of these vehicles. 
+
+9. Use the `tidyverse` to compute the mean length of the 93 cars, split by two categorical variables: `AirBags` and `Man.trans.avail`. What do these variables resprent and what are the possible realizations?
+
+10. Produce an interaction plot for these variables. Does there appear to be an interactive effect of `AirBags` with `Man.trans.avail` (whether the car comes in a manual transmission)?
+
+11. Fit a full two-way ANOVA model for the mean lengths according to the two grouping variables (assume satisfaction of all relevant assumptions). 
+
+12. Is the interactive effect statistically significant? Is there evidence of any main effects?
+
+

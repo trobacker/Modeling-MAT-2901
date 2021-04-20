@@ -1,0 +1,32 @@
+---
+title: "Assignment 7"
+author: "Your Name"
+date: "Due: Thursday, March 11, midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+## A Sampling Distribution
+
+A teacher wants to test all of the 10th-grade students at their school to guage their basic mathematical understanding, but the photocopier breaks after making only six copies of the test. WIth no other choice, they choose six students at random to take the test. Their results, recorded as a score out of 65, have a sample mean of 41.1. The standard deviation of the marks of this test is known to be 11.3. 
+
+1. Find the standard error associated with the mean test score. 
+
+2. Assuming the scores themselves are normally distributed, evaluate the probability that the mean score lies between 45 and 55 if the teacher took another sample of the same size. 
+
+3. A student who gets less than half the questions correct receives a failing grade (F). Find the probability that the average score is an F based on another sample of the same size. 
+
+Use the following answer questions 4 and 5.
+
+A statistician is measuring the time between cars passing her location at her house. Standing outside her house, she records 63 individual times between cars passing. These sampled times have a mean of $\bar{x}=37.8$ seconds with a standard deviation of $s=34.51$ seconds. 
+
+4. The statistician inspects a histogram of her raw measurements and notices that her raw data are heavily right-skewed. Briefly identify and describe the nature of the sampling distribution with respect to the sample mean and calculate the appropriate standard error (that is, what distribution, normal or $t$, will the sampling distribution take and what is the standard error calculation).
+
+5. Using the standard error from #4 and the appropriate probability distribution, calculate the probability that in another sample of the same size ($n=63$), the sample mean time between cars passing is as follows:
+
+a. More than 40 seconds
+
+b. less than half a minute

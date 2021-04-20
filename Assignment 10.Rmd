@@ -1,0 +1,39 @@
+---
+title: "Assignment 10"
+author: "Your Name"
+date: "Due: Friday, April 16, midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+### Regression Inferences
+
+We'll continue using the `survey` data from the MASS package for the next few exercises. 
+
+1. Using your fitted model of student height on writing handspan, provide point estimates and 99 percent confidence intervals for the mean student height for handspans of 12, 15.2, 17, and 19.9 cm. 
+
+The `survey` data has other variables present. The next several exercises will aim to fit a linear model to predict the mean student height, based on their pulse rate, given in `Pulse`.
+
+2. Fit the regression model and produce a scatterplot with the fitted line superimposed upon the data using ggplot. Explicitly write down the fitted model equation as well (doesn't have to be on the graph). 
+
+3. Identify and interpret the point estimate of the slope, as well as the outcome of the test associated with the hypotheses $H_0: \beta_1=0$, $H_a: \beta_1\neq0$. Also find a 95 percent CI for the slope parameter. 
+
+4. Using your model, add lines for 95 percent confidence and prediction interval bands on the plot. 
+
+5. What is the residual standard error (RSE)? What is the multiple $R^2$ value (interpret it)? Comment on the fit of your linear model. 
+
+Use the `mtcars` dataset for the following exercises. 
+
+6. Construct a linear model to model fuel efficiency, measured in miles per gallon (MPG), in terms of the overall weight of the vehicle (in thousands of pounds). 
+
+7. Plot your data and linear model together using ggplot. 
+
+8. Write down the regression equation and interpret the point estimate of the slope. Is the effect of `wt` on mean `mpg` estimated to be statistically significant? Explain. 
+
+9. Produce a point estimate and associated 95 percent prediction interval for a car that weights 6,000 lbs. Do you trust the model to predict observations accurately for this value of the explanatory variable? Why or why not?
+
+
+

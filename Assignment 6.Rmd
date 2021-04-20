@@ -1,0 +1,55 @@
+---
+title: "Assignment 6"
+author: "Your Name"
+date: "Due: Tuesday, March 9, midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+## A Binomial Model
+
+The distribution of blood types various from country to country and by race. For the United States the approximate blood type distribution is as follows:
+
+|O+|	O-|	A+|	A-|	B+|	B-|	AB+|	AB-|
+|--|--|--|--|--|--|--|--|
+|37.4%	|6.6%|	35.7%|	6.3%|	8.5%|	1.5%|	3.4%|	0.6%|
+
+Use this information to answer Questions 1 through 6 in the following context. Let’s suppose we have 10 (n=10) individuals coming to donate blood on a given day in the United States and we’re interested in how many of them would donate O- blood (the universal donor). 
+
+
+1.	We wish to use a binomial distribution to model this. What will you define a success to be in the model? What is a failure? What is the probability of success of an any individual donor? 
+
+2.	What assumptions and conditions will you have to make or meet in order to use the binomial distribution? 
+
+3.	Create a binomial distribution for the number of people who donate O- blood in R, store your `dbinom` values in a vector called `bmodel`, print the probabilities, and construct a bar plot of the distribution. 
+
+4.	Calculate the probability that exactly 3 of the 10 individuals who donate blood will donate O- blood type. 
+
+5.	Calculate the probability that at least 3 people of the 10 individuals who donate blood will donate O- blood type. 
+
+6.	Calculate the probability that no more than 2 people of the 10 individuals who donate blood will donate O- blood type. 
+
+## A Normal Distribution with Data
+
+The data we will use in this section comes from John Beale of Stanford, California, who recorded the speeds (in mph, miles per hour) of cars driving past his house, where the speed limit read 20 mph. He recorded every car for a two-month period, there are 100 representative readings out of this. This data set is located on Moodle called *Car Speeds Data*. 
+	
+7. Upload the car_speeds data into R and calculate the five number summary, the mean, and standard deviation of the 100 readings.
+
+8.	Construct a histogram and boxplot of the data set below (be sure to label things appropriately) using `ggplot`. 
+
+9.	Construct a normal probability plot for the data set (be sure to label things appropriately).
+
+10.	Do you believe a Normal model is appropriate for this data set? Refer to your normal probability plot and consider the mean and median from Number 1 to help you explain this.
+
+11.	Find the number of cars that were speeding (that is, the number of cars traveling over 20 mph). What is this as a proportion of the whole data set?
+
+12.	Since this data is representative it seems reasonable to use a normal model for the speed of all the vehicles that pass by this house. Using the mean and standard deviation for a normal model of the car speeds (from Number 1), calculate the proportion of vehicles that should be speeding according to the normal model, that is, P(x>20), where x is a vehicle’s speed. How does this compare to your answer in Number 5? Are they close?
+
+13.	Using your normal model from Number 6, what proportion of all vehicles have speeds under 20 mph?
+
+14.	Using your normal model from Number 6, what speed marks off the top 5% of fastest vehicles? (hint: use `qnorm`)
+
+

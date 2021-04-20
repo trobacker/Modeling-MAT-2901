@@ -1,0 +1,115 @@
+---
+title: "Multiple Linear Regression"
+author: "Thomas Robacker"
+date: "April 15, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(tidyverse)
+```
+
+## Introduction
+
+Multiple linear regression is a generalization of the single-predictor models we've done so far. It allows us to model our continuous respone variable in terms of more than one predictor so we can measure the joint effect of several explanatory variables on the respone variable.
+
+### Multiple Regression Model
+
+Instead of fitting separate simple linear regression models for each predictor, let's extend our model to accomodate multiple predictors. We can do this by givin each predictor a separate slope coefficient in a single model. In general, suppose that we have $p$ predictors. Then the multiple linear regression model takes the form:
+\[
+Y=\beta_0+\beta_1X_1+\beta_2X_2+\ldots+\beta_pX_p+\epsilon
+\]
+where $X_j$ represents the $j$th predictor and $\beta_j$ quantifies the association between that variable and the response. We interpret $\beta_j$ as the *average* effect on $Y$ of a one unit increase in $X_j$, *holding all other predictors fixed*. 
+
+It's important that you read through the ISLR Chapter 3 section covering multiple regression. There are several important questions we should ask:
+
+1. Is at least one of the predictors $X_j$, useful in predicting the respone?
+
+2. Do all the predictors help to explain $Y$, or is only a subset of the predictors useful?
+
+3. How well does the model fit the data?
+
+4. Given a set of predictor values, what response value should we predict and how accurate is our prediction?
+
+### Implementation with R
+
+Remember we made two simple regression models predicting student height based on either writing handspan or sex in the `survey` dataset? 
+
+```{r}
+survey.fit.hnd <- lm(Height ~ Wr.Hnd, data = survey)
+summary(survey.fit.hnd)
+```
+
+```{r}
+survey.fit.sex <- lm(Height ~ Sex, data = survey)
+summary(survey.fit.sex)
+```
+
+
+
+
+What those models can't tell us is the *joint effect* of sex and handspan on predicting height. If we include both predictors in a multiple linear model, we can (to some extend) reduce any confounding that might otherwise occur in the isolated fits of the effect of either single predictor on height. Let's do it:
+
+```{r}
+survey.mult <- lm(Height ~ Wr.Hnd + Sex, data = survey)
+summary(survey.mult)
+```
+
+The coefficient for handspan is now only 1.59, almost half of its value (3.12 cm) in the stand-alone simple linear regression for height. It's still highly statistically significant in the presence of sex. The coefficient for sex has also reduced in magnituted in comparison to it's simple linear model and is also still significant in the presence of handspan. 
+
+## Interpreting Marginal Effects
+
+In multiple regression, the estimation fo each predictor takes into account the effect of all other predictors present in the model. A coefficient for $X_j$ should be interpreted as the change in the *mean* response for a *one-unit increase* in $X_j$, *while holding all other predictors constant*. 
+
+In our model above, we have the following:
+
+* For students of the same sex (focusing on either just males or just females, i.e. holding the variable constant), a 1 cm increase in handspan leads to an estimated increase of 1.5944 cm in mean height. 
+
+* For students of similar handspan (held constant), males on average will be 9.4898 cm taller than females. Notice the reference level is female.
+
+* The difference in the values of the two estimated predictor coefficients when compared to their respective simple linear model fits, plus the fact that both continue to indicate evidence against the null hypothesis of "being zero" in the multivariate fit, suggests that confounding is present in the single-predictor models - they are not independent of each other.
+
+This final point highlights the general usefullness of multiple regression. It show that, in this example, if we use only single predictor models, the determination of the "true" impact that each explanatory variable has in predicting the mean response is misleading since some of the change in height is determined by sex, but some is also attributed to handspan. Notice that $R^2$ is higher for this multivariate model than the two single predictor models.
+
+The fitted model can be thought of as:
+\[
+\mbox{"Mean Height"}=137.687+1.594 \times \mbox{"handspan"}+9.49 \times \mbox{"sex"}
+\]
+where "handspan"" is the writing handspan supplied in centimeters and "sex" is supplied as either 1 (if male) or 0 (if female). Remember that female is the baseline reference here. 
+
+### Visualizing the Multiple Linear Model
+
+Let's graph the model in ggplot:
+
+```{r}
+ggplot(survey, aes(x= Wr.Hnd, y = Height, color = Sex, fill = Sex)) +
+  geom_point() + 
+  geom_smooth(method = "lm", se = T, level = 0.95) + 
+  theme_minimal()
+```
+
+This plot might look like two separate simple linear model fits, one for each level os sex, but it's important to realize that is not the case. We're effectively looking at a representation of a multivariate model on a two-dimensional canvas, where the statistics that determine the fit of the two visible lines have been estimated "jointly", that is, considering both predictors. 
+
+### Finding Confidence Intervals
+
+We can easily find confidence intervals for any of the regression parameters in multiple regression models with `confint`. Let's do so for our model:
+
+```{r}
+confint(survey.mult)
+```
+
+For instance, we are 95% confidence that the regression coefficient for the `Wr.Hnd` predictor is between about 0.96 and 2.23. 
+
+
+```{r}
+survey.multi2 <- lm(Height ~ Wr.Hnd + Sex + Smoke, data = survey)
+summary(survey.multi2)
+summary(survey.mult)
+```
+
+```{r}
+summary(survey)
+```
+

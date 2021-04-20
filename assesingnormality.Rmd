@@ -1,0 +1,205 @@
+---
+title: "Assessing Normality"
+author: "Thomas Robacker"
+date: "March 23, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Visual Analysis
+
+Let's examine a utility we may use to assess whether a data set is approximately normally distributed. The utility is called a *normal probability plot* or *normal quantile plot*. A normal probability plots data against a theoretical normal distribution the data would have given its mean and standard deviation in such a way that the points should form a line. Essentially, we calculate the z-scores for each data point using the mean and standard deviation of the data *given* that it may be from a normal distribution (this should ring bells for a hypothesis test)  *Departures from this line indicate departures from normality*. The built-in function, `qqnorm`, takes in our raw data and produces a normal probability plot. 
+
+Let's work with some synthetic data. Let's simulate 1000 randomly drawn IQ scores from $N(100,15)$ and store it in `iq`. 
+```{r}
+set.seed(1)
+iq <- rnorm(n = 1000, mean = 100, sd = 15)
+```
+
+The `set.seed(1)` function sets the random number generator to a specific state called a *seed*. This ensures we each have the same set of data and see the same graphics. The data being normally distributed is evidenced by plotting a histogram:
+
+```{r fig.align='center'}
+# base R
+hist(iq, main = "Histogram of Synthetic IQ Scores", xlab = "IQ Score", ylab = "Count", col = "light green")
+
+# ggplot
+iqdf<-as.data.frame(iq)
+ggplot(iqdf, aes(x=iq)) +
+  geom_histogram(fill = "lightgreen", color = "black")
+```
+
+We use the `qqnorm` function to produce the normal probability plot and the `qqline` function to graph the "optimal" line that the ordered pairs would lie along if the data were perfectly normal.
+```{r fig.align='center'}
+# base R
+qqnorm(iq)
+qqline(iq)
+
+# ggplot
+# notice in aes() we use `sample = iq` instead of `x = iq`
+ggplot(iqdf , aes(sample = iq)) +
+  stat_qq() +
+  stat_qq_line()
+```
+
+Since the ordered pairs on the normal probability plot seem to fit closely to the straight line plotted the assumption of normality isn't unreasonable. A note: we can't exactly say that the data *are* normally distributed but we do have pretty strong evidence of it (and the fact that we know we generated this from a normal distribution). Let's look at some non-normal data too.
+
+```{r}
+decay <- rexp(n = 100, rate = 2)
+decay <- as.data.frame(decay)
+head(decay)
+```
+
+We generated 100 random *exponentially distributed* realizations. This distribution has one parameter labeled as `rate`. Let's observe the normal probability plot.
+
+```{r}
+ggplot(decay , aes(sample = decay)) +
+  stat_qq() +
+  stat_qq_line()
+```
+
+There is clearly a deviation from normality:
+
+```{r}
+ggplot(decay, aes(x = decay)) +
+  geom_histogram(fill = "darkgreen", color = "black", bins = 16)
+```
+
+### Testing for Normality
+
+Now that we have an intuitive understanding of how to visualize normality and the normal probability plot, we can go even further and conduct a hypothesis test to *test for normality*. There are several tests and one of the most commonly use ones is the *Shapiro-Wilk test*. The hypotheses are as follows:
+\[
+H_0: \ \mbox{the population is normally distributed}\\
+H_a: \ \mbox{the population is not normally distributed}
+\]
+
+Like most statistical significance tests, if the sample size is sufficiently large this test may detect even trivial departures from the null hypothesis (i.e. although there may be some statistically significant effect, it may be too small to be of any practical significance); thus, we should investiage the *effect size* using the quantile plot from the previous section.
+
+This test is easy to conduct in R. Let's try it on our two preceeding examples:
+
+```{r}
+shapiro.test(iq)
+```
+
+The $p$-value of 0.7256 for the IQ sample indicates that we fail to reject the null hypothesis: that is, with $P>0.05$ the distribution of the data are *not* significantly different from a normal distribution ($\alpha = 0.05$). **It's reasonable to assume the data *may* come from a normal distribution**. 
+
+```{r}
+shapiro.test(decay$decay)
+```
+
+For the `decay` dataset (exponentially distributed random realizations), with a $P<0.05$, we reject the null hypothesis ($\alpha = 0.05$), indicating that the we have sufficient evidence the data set *does not* come from a normal distribution - in fact it's from an exponential distribution. 
+
+```{r}
+iq_vlarge <- rnorm(n = 100000, mean = 100, sd = 15)
+ks.test(scale(iq_vlarge), y = "pnorm")
+
+# We use scale() to standardize the iq values 
+# We use y = "pnorm" to specifiy the standard normal distribution
+```
+
+In the code chunk above, we've created a "very large" ($n=100,000$) dataset from the $N(100,15)$ distribution. We implemented an alternative test for normality called the *Kolmogorov-Smirnov* test, because if you try the Shapiro-Wilk test, you'll recieve an error; the sample size is too large. The hypotheses are the same as the SW test in this case. With $P>0.05$, we conclude that the distribution may be from a normal distribution. 
+
+```{r}
+qqnorm(iq_vlarge)
+qqline(iq_vlarge)
+```
+
+### Testing Normality for a t-Test
+
+Recalling the `mtcars` data set, let's examine the `mpg` column. Now, this dataset has 32 observations, so by the Central Limit Theorem, we know that the sampling distribution for the sample mean becomes approximately normal (we use the $t$-distribution). Let's check for normality in the sample anyway:
+
+```{r}
+mpg <- mtcars$mpg
+t.test(x = mpg, mu = 25, alternative = "less")
+```
+
+Great, so we conclude the dataset may come from a normal distribution (making our $t$-test all the more reliable). 
+
+Let's test something that does not meet the requirements for the Central Limit Theorem. 
+
+Recall the earthquake data from `quakes` in R. We tested the claim that the true mean magnitude is in fact *greater* than 4.3. Let's reproduce the results below:
+
+```{r}
+t.test(quakes$mag, mu = 4.3, alternative = "g")
+```
+
+What is our conclusion?
+
+
+Let's suppose we have a "small" sample from the population. We'll examine the dataset and assess normality and conduct the test again.
+
+```{r}
+set.seed(9)
+
+# Sample size 15, no replacement
+mag_1 <- sample(quakes$mag, size = 15, replace = F)
+hist(mag_1)
+shapiro.test(mag_1)
+t.test(mag_1, mu = 4.3, alternative = "g")
+```
+
+What conclusion do we make? Is it the same as before with all the data values?
+
+Let's conduct another one:
+
+```{r}
+set.seed(17)
+
+# Sample size 15, no replacement
+mag_2 <- sample(quakes$mag, size = 15, replace = F)
+hist(mag_2)
+shapiro.test(mag_2)
+t.test(mag_2, mu = 4.3, alternative = "g")
+```
+
+Let's look at one more:
+```{r}
+set.seed(54)
+
+# Sample size 15, no replacement
+mag_3 <- sample(quakes$mag, size = 15, replace = F)
+shapiro.test(mag_3)
+t.test(mag_3, mu = 4.3, alternative = "g")
+```
+
+In sample `mag_3`, we do not reject the null hypothesis and reach the same conclusion. However, what was the result from the Shapiro-Wilk test and how might that affect this conclusion? 
+
+What do we conclude? What are the differences among the tests? Let's use $\alpha = 0.05$ for the t-tests.
+
+What's going on here? 
+
+### P-Values and Errors
+
+Remember, a P-value is a conditional probability. It tells us the probability of getting results at least as unusual as the observed statistic, *given* that the null hypothesis is true. We can write it as
+
+\[
+P\mbox{-}value = P(\mbox{observed statistic value (or even more extreme)}|H_0) 
+\]
+
+Writing the P-value this way helps make it clear that the P-value is *not* the probability that the null hypothesis is true. It is a probability about the data. How small the P-value has to be for one to reject the null hypothesis depends on a lot of things, not all of which can be precisely quantified. The P-value should be observed as a measure of the strength of the evidence against the null hypothesis, but never serve as a hard and fast rule for decisions. You have to take that responsibility on yourself. On the other hand, a large P-value means that what we've observed isn't surprising given the null hypothesis. It doesn't prove that the null hypothesis is true, but it certainly offers no evidence that it's *not* true. When we see a large P-value, all we can say is that we "don't reject the null hypothesis". 
+
+Let's talk about *errors*. Consider for the moment, given a specific test, what the *correct* outcome is. If $H_0$ is really true, then we'd want to retain it (large P-value). If $H_a$ is really true, we'd want to reject the null (small P-value). This "truth", is impossible to know in practice. However, it's useful to consider just how good (or bad) a given hypothesis test is at yielding result that leads to the correct conclusion. 
+
+To be able to test the validity of your rejection or retention of the null hypothesis, we must identify two kinds of errors:
+
+* A *Type I error* occurs when we incorrectly reject a true $H_0$. In any given test, the probability of a Type I error is equivalent to the significance level $\alpha$. 
+
+* A *Type II error* occurs when we incorrectly retain a false $H_0$ (i.e. we fail to accept a true $H_a$). Since this depends upon what the true $H_a$ actually is, the probability of committing such an error, labeled $\beta$, is not usually known in practice. 
+
+In the example above about the earthquake magnitudes, we learned that from the population it seemed that the alternative hypothesis was in fact true: the magnitudes were greater than 4.3. Assuming this to be the "truth", did we observe any errors in our small sample versions?
+
+At $\alpha=0.01$ significance, in sample `mag_1`, we do reject the null hypothesis and reach the same conclusion. 
+
+In sample `mag_2`, we do not reject the null hypothesis that the magnitudes are 4.3 (Type II error).
+
+There's a nice way to visualize errors too:
+
+|             |                    |   The Truth  |               |
+|:-----------:|--------------------|:------------:|---------------|
+|             |                    | H_0 True     | H_0 False     |
+| My Decision | Reject H_0         | Type 1 Error | OK            |
+|             | Fail to Reject H_0 |      OK      | Type II Error |
+

@@ -1,0 +1,158 @@
+---
+title: "tTests"
+author: "Thomas Robacker"
+date: "March 16, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Hypothesis Testing
+
+In this section we'll build on our experience with confidence intervals and sampling distributions to make more formal statements about the value of a true, unknown parameter of interest. For this, we'll learn about frequentist *hypothesis testing*, where a probability from a relevant sampling distribution is used as evidence against some claim about the true value.When a probability is used in this way, it is referred to as a *p*-value. First, let's outline the essential terminology that we come across often in hypothesis testing.
+
+### Hypotheses
+
+Hypothesis testing involves stating a claim and the subsequent hypothesis test is done with a *null* and an *alternative* hypothesis. The null hypothesis is interpreted as the *baseline* or *no-change* hypothesis and is the claim that is assumed to be true. The alternative hypothesis is the conjecture that we're testing for, against the null hypothesis. 
+
+IN general, null and alternative hypotheses are denoted $H_0$ and $H_a$, respectively, and they are written as follows:
+\[
+H_0:\ \ldots \\
+H_a:\ \ldots
+\]
+
+The null hypothesis is often (but not always) defined as an equality, $=$, to a null value. Conversel, the alternative hypothesis is often defined in terms of an inequality to the null value. 
+
+* When $H_a$ is defined in terms of a $<$ symbol, it is a *one-sided* test or *lower-tailed test*.
+
+* When $H_a$ is defined in terms of a $>$ symbol, it is a *one-sided* test or *upper-tailed test*.
+
+* When $H_a$ is defined in terms of a $\neq$ symbol, it is a *two-sided* test or *two-tailed test*.
+
+These variants depend on the specific situation and problem at hand. 
+
+### Test Statistic
+
+Once the hypotheses are formed, sample data are collected, and statistics are calculated according to the paramters detailed in the hypotheses. The *test statistic* is the statistic that's compared to the appropirate standardized sampling distribution to yield the $p$-value. 
+
+A test statistics is typically a standardized or rescaled version of the sample statistic of interest. The distribution and extremity (distance from zero) of the test statistics are teh sole drivers of the smallness of the $p$-value. Specifically, the test statistic is determined by both the difference between the original sample statistic and the null value and the standard error of the sample statistic. 
+
+### $p$-value
+
+The $p$-value is the probability vlue that's used to quantify the amount of evidence, if any, against the null hypothesis. It is the probability of observing the test statstic, or something more extreme, assuming the null hypothesis is true. The exact nature of calculating a $p$-value is dictated by the type of statistics being tested and the nature of $H_a$. 
+
+Put simply, the more extreme the test statistic, the smaller the $p$-value. The smaller the $p$-value, the greater the amount of statistical evidence against the assumed truth of $H_0$. Here's a pneumonic: If $p$ is low, $H_0$ must go. If $p$ is high, $H_0$ may fly. 
+
+### Significance Level
+
+For every hypothesis test, a *significance level*, denoted $\alpha$, is assumed. This is the the same *alpha* for confidence levels and is used to qualify the result of the test. The significance level defines a cutoff oint, at which you decide whether there is sufficient evidence to view $H_0$ as incorrect and favor $H_a$ instead. 
+
+* If the $p$-value is greater than or equal to $\alpha$, then we conclude there is insufficient evidence against the null hypothesis, and therefore we *retain* $H_0$ when compared to $H_a$. 
+
+* If the $p$-value is less than $\alpha$, then the result of the test is *statistically significant*. This implies there is sufficient evidence against the null hypothesis and therefore we *reject* $H_0$ in favor of $H_a$. 
+
+Common values of $\alpha$ are 0.1, 0.05, and 0.01. If it's not clear what $\alpha$ is used, assume it's 5%. 
+
+## Testing Means
+
+The validity of hypothesis tests involving samle means is dependent upon the same assumptions we made with their sampling distributions. In particular, we'll start by assuming that the central limit theorem holds, and if the sample sizes are small, ($n<30$), the raw data are from a normally distributed population. We'll develop the popular *one-sample t-test* here. 
+
+### Single Mean
+
+Let's conduct a one-sample t-test with manual calculations. Recall the `mtcars` dataset, we'll work with the `mpg` column. The mtcars dataset contains information for 32 automobiles from 1973-74 models. The average miles per gallon (MPG) for vehicles sold in the US is about 25 mpg. Presuming that this sample of vehicles reasonably represents all vehicles mpg from the time, let's test to see if the average mpg for vehicles in the mtcars dataset is less than the average mpg today. We'll outline four steps in this process: state the hypotheses, find the test statistic, calculate the $p$-value, and make a conclusion with $\alpha =0.05$. 
+
+(Step 1) So, we wish to test the hypotheses:
+
+\[
+H_0:\ \mu=25 \\
+H_a:\ \mu<25
+\]
+where $\mu$ represents the mean mpg of these vehicles.  
+
+Let's find the relevant sample statistics:
+
+```{r}
+mpg <- mtcars$mpg
+xbar<-mean(mpg)
+xbar
+
+sd<-sd(mpg)
+sd
+
+n<-length(mpg)
+n
+```
+
+The sample has a mean mpg of $\bar{x}=20.09$ mpg and a standard deviation $s=6.03$ for a sample of size $n=32$. The question our hypothesis test seeks to answer is this: given the estimated standard deviation, what's the probability of observing a sample mean (when $n=32$) of 20.09 mpg or less if the true mean is 25 mpg? To answer this, we need to calculate the test statistic.
+
+(Step 2) Formally, the test statistic $T$ in a hypothesis test for a single mean with respect to a null value of $\mu_0$ is given as
+\[
+T=\frac{\bar{x}-\mu_0}{(s/\sqrt{n})}
+\]
+based on a sample of size $n$, a sample mean of $\bar{x}$, and a sample standard deviation of $s$ (the denominator is the estimated *standard error* of the mean). This is the *standardized value* of our sample mean on the $t$-distribution with degrees of freedom $df=n-1$ relative to the null hypothesis. 
+
+Let's find this in R:
+```{r}
+se <- sd/sqrt(n)
+se
+
+tstat<-(xbar-25)/se
+tstat
+
+```
+
+(Step 3) We use the test statistic $T=-4.461587$ to find the $p$-value. Recall that the $p$-value is the probability we observe $T$ or something more extreme. The nature of "more extreme" is determined by the alternative hypothesis, $H_a$, which, as a less-than statement, directs us to find a left-hand, lower-tail, probability as the $p$-value. In other words, the $p$-value is provided as the area under the sampling distribution (a $t$-distribution with 31 df here) to the left of $T$. We find this in R with the `pt` function:
+
+```{r}
+pt(tstat, df=n-1)
+```
+
+That is, the $p$-value is $P=0.00003293369$. Our result states that if the $H_0$ were true, there would a very small chance that we'd observe the vehicle mpg mean of $\bar{x}=20.09$, or less, as a random phenomenon. 
+
+(Step 4) Now we make a conclusion. Since a $p$-value of $P=0.00003293369$ is smaller than the predefined significance level of $\alpha=0.05$ ($P<\alpha$), we conclude that there is sufficient evidence to reject the null hypothesis in favor of the alternative, suggesting the true value of $\mu$ is less than 25 mpg. That is, we have significant evidence that the average MPG of vehicles from 73-74 is less than the average today of 25 MPG. 
+
+Often times, once we discover a significant difference, we would like to estimate that difference or perform a parameter estimation on the paramter we tested. We can find the corresponding 95% confidence interval for $\mu$ with R:
+
+```{r}
+xbar + c(-1,1)*qt(0.975, df=n-1)*se
+```
+We are 95% confidence the true mean MPG of vehicles from 1973-74 is between about 17.9 and 22.3 MPG. 
+
+### R Function: `t.test`
+
+The result of our one-sample $t$-test can be done in R with the built-in `t.test` function:
+
+```{r}
+t.test(x = mpg, mu = 25, alternative = "less")
+```
+
+The function takes the raw data vector as `x`, the null value for the mean as `mu`, and the direction of the test (in other words, how to find the $p$-value under the appropriate $t$-distribution) as `alternative`. The `alternative` argument has three available options: "less", "greater", and "two.sided". The default is "two.sided". 
+
+Note that the value of $T$ is reported in the output of `t.test`, as are the degrees of freedom and the $p$-value. You also get a 95% confidence level, but when doing a one-sided test, you get a one-sided interval. To get the usual confidence interval you can rerun the command with the `alternative="two.sided"` argument:
+
+```{r}
+t.test(x = mpg, mu = 25, alternative = "two.sided")
+```
+
+You can specify the level of confidence with `conf.level`, for instance, below is a 99% CI:
+```{r}
+t.test(x = mpg, mu = 25, conf.level = 0.99)
+```
+
+You can also store the results of your `t.test` output as objects and pull specific attributes from it:
+
+```{r}
+my.test<-t.test(x = mpg, mu = 25, alternative = "less")
+my.test$statistic
+my.test$p.value
+
+summary(my.test)
+```
+
+### Exercise
+
+Suppose it was previously believe that the mean magnitude of seismic events off the coast of Fiji is 4.3 on the Richter scale. Use the data in the `mag` variable of the ready-to-use `quakes` data set, providing 1,000 sampled seismic events in that area, to test the claim that the true mean magnitude is in fact *greater* than 4.3. Set up appropriate hypotheses, use `t.test` with $\alpha = 0.01$, and draw a conclusion. What is the 99% percent confidence interval for the true mean magnitude of seismic events off the coast of Fiji?
+
+

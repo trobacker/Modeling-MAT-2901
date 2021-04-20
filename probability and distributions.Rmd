@@ -1,0 +1,308 @@
+---
+title: "Probability and Distributions"
+author: "Thomas Robacker"
+date: "February 18, 2021"
+#css: styles.css
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Introduction
+
+The concept of probability is central to statistical reasoning and models. This section will refresh or renew your understanding of the fundamental concepts of probability. 
+
+## What is Probability?
+
+A *probability* is a number that describes the "magnitude of chance" associated with making a particular observation or statement. We'll consider the probability of some event $A$ and write the probability of it occuring as $P(A)$. All probabilities lie between 0 and 1 (inclusive). 
+
+In statistics, an *event* typically refers to a specific set of outcomes that can occur in a random experiment or phenomenon. We call the set of all possible outcomes the *sample space* and denote it as set $S$. 
+
+Let's consider the random phenomena of rolling a fair six-sided die. Then $S=\{1,2,3,4,5,6 \}$. Let $A$ be the event we roll a one: $A=\{ 1\}$. It's intuitive that $P(A)=1/6$. Similarly for any other outcome. In this instance, each outcome is *equally likely* with probability $1/6$. 
+
+This assignment of probability is known as *frequentist* or *classical* probability. Which is to say that the relative frequency with which an event occurs over many identical, object trials will be approach the value of the probability of the event occuring. Let's simulate this process to be sure we understand it. 
+
+The code below simulates rolling a six-sided and twenty-sided (dodecahedron) die. 
+
+```{r}
+## Simulating dice rolls
+
+n <- 1000
+# Sample size
+N1 <- 6   # Number of die sides
+N2 <- 20   # Number of die sides
+
+#Generate random sample of D6 die.
+x<-sample(x = 1:N1,size = n,replace = T)
+
+# Set up plot for 1 row by 2 columns
+par(mfrow=c(1,3))
+
+freq<-0
+phat<-numeric(n)
+for(i in 1:n){
+  if(x[i]==1){ freq<-freq+1}
+  phat[i] <- freq/i
+}
+
+cat("The observed proportion of one's observed is ", phat[i], "\n")
+
+plot(1:n, phat, xlab = "Trial Number", ylab = 
+       "Proportion of 1's", main = 
+       "Plot of Relative Frequency",
+     type = "b",lty = 1, col = "blue",ylim = c(0,1))
+abline(h = 1/6, col = "red")
+
+#Plot histogram of face values stored in x
+hist(x,breaks = seq(0,N1),col = rainbow(N1),
+     freq = F, main = "D6",
+     xlab = "Face Value", ylab = "Proportion")
+
+# Repeat above for D20
+x2<-sample(x = 1:N2,size = n, replace = T)
+hist(x2,breaks = seq(0,N2),col = rainbow(N2),
+     freq = F,main = "D20", 
+     xlab = "Face Value", ylab = "Proportion")
+
+par(mfrow=c(1,1))
+```
+
+Notice that as the number of trials increases, the relative frequency of observed ones on the six-sided die approaches the classical value of $1/6 \approx 0.1666667$. Similary, on the twenty-sided die it approaches $1/20 = 0.05$ though it takes more trials compared to the six-sided die to approach this.
+
+## Basic Rules of Probability
+
+Let's summarize some of the basic rules for calculating and manipulating the probability of certain events. 
+
+* Axiom: $0\leq P(A) \leq 1$
+
+* Two events $A$ and $B$ are *disjoint* or *mutually exclusive* if their intersection is empty. That is, $A\cap B=\emptyset$
+
+* If the sample space, $S$, is divided into $n$ disjoint events, $A_i$, then $\sum_{i=1}^n P(A_i) = P(S) = 1$.
+
+* Addition Rule: $P(A\cup B)=P(A)+P(B)-P(A\cap B)$
+
+* Complement Rule: $P(A^c)=1-P(A)$
+
+* Conditional Probability: $P(A|B)$ represents "the probability that $A$ occurs, *given* that $B$ has already occurred," and vice verse for $P(B|A)$. 
+
+* If $P(A|B)=P(A)$, then the two events are *independent*, if this is not true then they are *dependent*. Generally, you cannot assume that $P(A|B)=P(B|A)$.
+
+* Multiplication Rule: If events $A$ and $B$ are independent, then $P(A \cap B)=P(A)P(B)$. This can be extended to any finite number of independent events:
+
+\[
+P(A_1\cap A_2\cap \ldots\cap A_n)=P(A_1)\cdot\ \cdots\ \cdot P(A_n)
+\]
+
+## Random Variables and Probability Distributions
+
+In modeling, we'll be interested in modeling certain random phenomena and all their possible outcomes with a *probability distribution*. A *random variable* is a variable whose specific outcomes are assumed to arise by chance or according to some random or *stochastic* mechanism. When considering random variables we assume that we have not yet made an observation, so the chances of observing a specific value, or within a specific interval of outcomes, has associated with it a probability. 
+
+It therefore makes sense to think of random variables as being tied to a *function* that defines these probabilities, which is referred to as a *probability distribution*. 
+
+### Realizations
+
+Half the battle we have here is some notation. The concept of a random variable revolves around the consideration of the possible outcomes of a variable in a probabilisitic fashion. When we've actually made observations of a random variable, these are referred to as *realizations* (of the random variable).
+
+Consider the following, suppose we roll our beloved six-sided die. Define the random variable $Y$  to be the result. The possible realizations are $Y=1, Y=2, Y=3, Y=4, Y=5, Y=6$. This is called a *discrete random variable*. 
+
+Now, let's say you're planning to go on a picnic and monitor the maximum daily temperature at your preferred spot. Let the random variable $T$ be the temperature in degrees Fahrenheit we observe there. Technically, we might say the possible realizations of $T$ lie in the interval $-\infty < T < \infty$. This is an example of a *continuous random variable*. Our goal as modelers is to model or determine a distribution for these probabilistic outcomes of the random variables.
+
+## Discrete Random Variables
+
+A discrete random variable's realizations only take on certain precise values. Rolling a standard die can result in only those six distince possibilities described previously by $Y$ and it wouldn't make sense to observe something like "5.91". 
+
+Probability distributions tied to discrete random variables are called *probability mass functions* (pmf's). Since these define the probabilities of all possible outcomes, the sum of the probabilities in any complete pmf ust equal 1. For instance, in the die rolling, the probabilities of $1/6$ for each of the six outcomes adds to 1 exactly. 
+
+Let's consider another example of a discrete random variable and what quantities we might find of interest. Suposse we go into a casino and play a simple gambling game. At each turn, you can either lose 4 dollars with probability 0.32, break even (win or lose nothing) with probability 0.48, win one dollar with probability 0.15, or win 8 dollars with probability 0.05. 
+
+Note that the sum of these probabilities is 1. Let the discrete random variable $X$ be defined as the "amount earned" at each turn you have. The distribution is shown in the table below:
+
+| x         | -4 | 0 | 1 | 8
+| ---- | ---- | ---- | ---- | ---- |
+| $P(X=x)$  | 0.32 | 0.48 | 0.15 | 0.05 |
+| $P(X\leq x)$ | 0.32 | 0.80 | 0.95 | 1.00 |
+
+The last row is called the *cumulative probability distribution* of the discrete RV. Let's visualize this in R:
+
+```{r}
+X.outcomes <- c(-4,0,1,8)
+X.prob <- c(0.32,0.48, 0.15, 0.05)
+barplot(X.prob, ylim = c(0,0.5), names.arg = X.outcomes,
+        space = 0, xlab = "x", ylab = "P(X=x)")
+
+X.cumul <- cumsum(X.prob)
+barplot(X.cumul, names.arg = X.outcomes, space = 0,
+        xlab = "x", ylab = "P(X <= x)")
+```
+
+Generally, it's important to remember the following for any probability mass function based on a discrete random variable $X$: 
+
+* There are *k* distinct outcomes $x_1,\ldots, x_k$.
+
+* For each $x_i$, where $i\in \{ 1, \ldots, k\}$, $0\leq P(x_i) \leq 1$.
+
+* $\sum_{i=1}^kP(X=x_i)=1$
+
+### Mean and Variance of a Discrete Random Variable
+
+It's useful to describe or summarize properties of a RV as we would for raw data. The mos tuseful are mean and variance, both of which depend upon the relevant distribution of probabilities associated with that random variable. 
+
+The *mean* of a discrete random variable $X$, also called the *expected value* or thought of as the "average outcome" is defined as:
+
+\[
+\mu_X=\mathbb{E}[X]=\sum_{i=1}^k x_iP(X=x_i)
+\]
+
+That is, to find the mean we multiply the numerica value of each outome by its corresponding probability and sum the result. 
+
+```{r}
+mu.X <- sum(X.outcomes*X.prob)
+mu.X
+```
+
+We see that the expected outcome of -0.73 dollars suggests that, on average, one will lose 0.73 dollars per turn. 
+
+The variance, $\sigma_X^2$, also written as $Var[X]$, quantifies the variability in the possible realizations of $X$. The formula for the variance is:
+
+\[
+\sigma_X^2= Var[X]=\sum_{i=1}^k (x_i-\mu_x)^2P(X=x_i)
+\]
+
+The procedure is straightforward - the variance is computed by squaring the differences between each realization and mean and then multiplying by the corresponding probability of the occurrence before summing these products.
+
+```{r}
+var.X <- sum((X.outcomes - mu.X)^2*X.prob)
+var.X
+
+sd.x <- sqrt(var.X)
+sd.x
+```
+
+We see that the expected outcome of -0.73 dollars suggests that, on average, one will lose 0.73 dollars per turn, with a standard deviation of about 2.82 dollars. These quantities are not, and need not be, one of the specifically defined outcomes. They describe the behavior of the random mechanism over the long run (that's what probabilities are!). 
+
+
+## Continuous Random Variables
+
+A continuous random variable has no limit to the number of possible realizations. For a discrete random variable, it natural to think of a specific outcome as an event and assign it a corresponding probability. This is impossible with a continuous random variable. For instance, suppose we're taking a picnic and we restrict (reasonably) that the range of possible values of temperature measurements to be between 40 and 90 degrees Fahrenheit ($40\leq F \leq 90 $), there are an infinite number of distinct values on that interval. Measuring 64 degrees makes as much sense as observing something like 63.387934 degrees. As such, we cannot assign probabilities to specific, single outcomes. Instead, we assign probabilities to *intervals* of values. For example, based on $F$, asking $P(F = 64)$ - what's the probability that the temperature is *exactly* 64 degrees is not a valid question. However, asking $P(F\leq 64)$ - what's the probability the temperature is less than or equal to 64 degrees is answerable because it defines an interval. 
+
+To calculate probabilities for continuous random variables, we calculate **area under the density curve* for a continuous probability density function. As with discrete random variables, continuous random variables may have a function describing them, which we call a *density function* or *probability distribution*. 
+
+A very well-known example of a continuous probability density function is the normal model. For example, it's known that IQ tests are typically normally distributed with a mean of 100 and a standard deviation of about 15. If you were to sample a large number of people at random and plot their test scores, you're guaranteed to see a (approximately) normal density plot. We simulate one below.
+
+
+### Plotting a Normal Density Curve on a Histogram
+
+```{r}
+# Set the Random Number Generator (RNG) so we get same results
+set.seed(2)
+
+#Specify the mean and standard deviation
+mu <- 100
+s <- 15
+
+#Generate 500 random test scores
+x <- rnorm(n = 500, mean = mu, sd = s)
+
+#Store in a data frame for ggplot friendliness
+x<- as.data.frame(x)
+
+# Plot the histogram and density curve together
+ggplot(x, aes(x = x)) + 
+  geom_histogram(aes(y = ..density..), 
+                 color = "blue",
+                 fill = "light green") + 
+  geom_rug(alpha = 0.2) + 
+  stat_function(fun = dnorm, 
+                color = "blue", 
+                fill = "lightblue", 
+                geom = "area",
+                alpha = 0.5,
+                args = list(mean = mu, sd = s))
+
+```
+
+We see that the normal model is unimodal, perfectly symmetric, and bell-shaped. It 'fits' the histogram quite well! We frequently use probability density curves to model situations such as this. 
+
+### The Mathematical Language for Continuous Density Functions
+
+For discrete random variables, finding probabilites is rather straightforward. For example, considering our beloved D6 die,
+\[
+P(X\leq 3)=P(X=1)+P(X=2)+P(X=3)=1/6+1/6+1/6=3/6=1/2
+\]
+but for density functions, we can't add up infinitely many outcomes whose probabilities aren't even well-defined. So, we have to turn to calculus. As stated earlier, we define probabilites for continuous random variables as *area under a density curve* for a given *interval of values*. We do this using an *intergral* from calculus. All an integral is, essentially, is an area under a curve given by a function! 
+
+For example, the probability we randomly draw a person whose IQ score is below 110 is shown below.  First we draw what we're trying to find below. The magenta shaded area is the proportion of interest. The objective is to find the proportion of IQ scores below 110. 
+
+```{r echo=F, fig.align='center'}
+################
+## Don't feel obliged to understand this code chunk
+################
+mu=100;sigma=15
+domain=mu-3*sigma:mu+3*sigma
+z<-seq(mu-3*sigma,mu+3*sigma,length = 300)
+fx<- dnorm(z,mean = mu,sd = sigma)
+plot(z,fx,type = "l",xlim = c(mu-3*sigma,mu+3*sigma),main="The N(100,15) Distribution", xlab = "IQ Scores",ylab = "Proportion (Density)")
+abline(h = 0, col = "gray")
+
+# Fill in the cumulative proportion
+lowbd<-mu-5*sigma
+highbd<-110
+xvals_sub<- z[z>=lowbd & z<=highbd]
+fx_sub<- fx[z>=lowbd & z<=highbd]
+polygon(rbind(c(lowbd,0),cbind(xvals_sub,fx_sub),c(highbd,0)),border=NA,col="magenta")
+
+#Place x-value and text
+abline(v=110,lty=2)
+text(116,0.022,labels = "x = 110")
+
+arrows(70,0.022,90,0.005)
+text(72,0.024,labels = "Proportion of scores below 110")
+```
+
+We represent this simply as $P(x<110)$ with our usual notation. However, the way it's calculated is as the integral from minus infinity up to $x = 110$ of the density function for a normal curve whose mean is 100 and standard deviation 15. We call this, as with discrete random variables, the *cumulative probability* and write mathematically as:
+\[
+P(X<110) = \int_{-\infty}^{110}f(x)dx
+\]
+where $f(x)$ is the formula or mathematical function for the noraml curve which is
+\[
+f(x) = \frac{1}{\sigma \sqrt{2\pi}}e^{- \frac{(x-\mu)^2}{2\sigma^2}  }
+\]
+(Raunchy!) So, writing the intergral is just the calculus way of saying we're calculating the area under the curve within that interval (which we associate as the probability) -- all the way from the left in this case: the interval is $x\in(-\infty, 110)$.
+
+Generally, any function $f(x)$ that defines a probability density for a random variable $X$ must possess the following properties (analogous to the discrete version):
+
+* $f(x)\geq 0$ for all $-\infty <x<\infty$.
+
+* $\int_{-\infty}^{\infty}f(x)dx=1$ (the total area under the function must be 1)
+
+### Mean and Variance of a Continuous Random Variable
+
+As with discrete random variables, we can calculate the mean and variance (hence standard deviation) of continuous random variables. 
+
+For a continuous random variable $X$ with density $f(x)$, the mean $\mu_X$ (or *expectation* or *expected value*) is again interpreted as the "average outcome" that you can expect over many realizations. It is expressed mathematically as follows:
+\[
+\mu_X=\mathbb{E}[X]=\int_{-\infty}^{\infty}xf(x)dx
+\]
+
+THis equation represents the continuous analogue of the it's discrete counterpart and can be read as "the total area underneath the function given by multiplication of the density function $f(x)$ with the value of $x$ itself."
+
+Similarly, the variance, $\sigma_X^2$ also written as $Var[X]$, quantifies the variability inherent in realizations of $X$. It's calculated as follows:
+\[
+\sigma_X^2=Var[X]=\int_{-\infty}^{\infty}(x-\mu_X)^2f(x)dx
+\]
+Again, the procedure is to find the area under the density function multiplied by a certain quantity - in this case, the squared difference of the value of $x$ with the overall expected value $\mu_X$ (squared deviation).
+
+Now, you won't need to do any calculus for our class (yay!), but you should understand what the symbols and formulas represent to us in terms of probability here. 
+
+For the IQ example earlier, we have 500 realizations of the normally distributed random variable. In this case, $\mu_X=100$ and $\sigma_X=15$. That is, the mean and standard deviation for the density function are exactly 100 and 15, respectively. When we sample from this distribution, we got realizations (500 of them), whose mean and standard deviation are:
+
+```{r}
+mean(x$x)
+sd(x$x)
+```
+
+
+

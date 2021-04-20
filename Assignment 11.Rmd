@@ -1,0 +1,26 @@
+---
+title: "Assignment 11"
+author: "Your Name"
+date: "Due: Thursday, April 22, midnight"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+For the exercises in this assignment we'll use the `survey` data set from the `MASS` package. 
+
+1. The `survey` data set has a variable `Exer`, a factor with $k=3$ levels describing the amount of physical exercise time each student gets: none, some, or frequent. Obtain a count of the number of students in each category (I recommend using your tidyverse skills) and produce side-by-side boxplots of student height split by exercise. 
+
+2. Assuming independence of the observations and normality, fit a linear regression model with height as the response variable and exercise as teh explanatory variable. What's the default referenc elevel of the predictor? Produce a model summary. 
+
+3. Draw a conclusion based on your fitted model: does it appear that exercise frequency has any impact on mean height? What is the nature of the estimated effect? 
+
+4. Predict the mean heights of one individual in each of the three exercise categories, accompanied by 95 percent prediction intervals. 
+
+5. Conduct a one-way ANOVA on the same variables: `Height ~ Exer`. Compare the F-statistic and P-value from your ANOVA and the bottom line output from your summary of the `lm` object. What do you observe? 
+
+
+
+

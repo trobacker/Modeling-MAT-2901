@@ -1,0 +1,146 @@
+---
+title: "Two-Way ANOVA"
+author: "Thomas Robacker"
+date: "April 6, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# You may need install this package:
+library(car)
+library(tidyverse)
+```
+
+```{r echo=F}
+# Personal computer
+#mugs <- read.csv("C:/Users/AcerPC/Google Drive/WWC Course Material/MAT 2901 MathStat Modeling/R Markdown Files/Mugs.csv", stringsAsFactors = F)
+# Work computer
+#mugs <- read.csv("G:/My Drive/WWC Course Material/MAT 2901 MathStat Modeling/R Markdown Files/Mugs.csv", stringsAsFactors=FALSE)
+```
+
+In many sutdies, the numeric outcome variable you're interested in will be categorized by more than one grouping variable (factor). In these cases, you would use the *multiple-factor* ANOVA rather than the one-way ANOVA. 
+
+Increasing the number of grouping variables complicates matters somewhat. In dealing with more than one factor, we must consider the *main effects* of each factor on the numeric outcome (response), while simultaneously accounting for the presence of the other factor(s). That's not all, though. It's just as important to additionally investigate the idea of an *interactive effect*; if an interactive effect exists, then it sugests that the impact one of the factors has on the response, specified by its main effect, varies according to the levels of another factor. 
+
+### The Hypotheses
+
+For our notation, denote our numeric outcome variable (response) with $O$ and our two grouping variables (factors) as $G_1$ and $G_2$. In two-way ANOVA, the hypotheses should be set along the following lines:
+
+\[
+H_0: G_1\mbox{ has no main effect on the mean of }O\\
+\qquad G_2\mbox{ has no main effect on the mean of }O\\
+H_a: \mbox{Sperately, each statement in $H_0$ is incorrect}
+\]
+
+To illustrate our two-way ANOVA, let's work with the built-in `warpbreaks` data frame which provides the number of "warp break" imperfections (column `breaks`) observed in 54 pieces of yarn of equal length. Each piece of yarn is classified according to two categorical variables: `wool` (with levels `A` and `B`) and `tension` (the level of tension applied to that piece: `L`, `M`, or `H` for low, medium, or high). Let's inspect the mean number of warp breaks for each classification.
+
+```{r}
+summary(warpbreaks)
+head(warpbreaks)
+```
+
+
+```{r}
+wb.means <- warpbreaks %>%
+  group_by(tension, wool) %>%
+  summarize(mean = mean(breaks))
+
+wb.means
+```
+
+### Main Effects and Interactions
+
+We could perfrom just one-way ANOVA on each grouping variable separately, but this, in general, isn't a good idea. Let's demonstrate this though:
+
+```{r}
+summary(aov(breaks ~ wool, data = warpbreaks))
+```
+
+This output tells us that *if we ignore `tension`*, there is no evidence to suggest there is any difference in the mean number of imperfections on the type of `wool` alone (p-value 0.108).
+
+Conduct the one-way ANOVA for the other factor and interpret your result:
+
+```{r}
+summary(aov(breaks ~ tension, data = warpbreaks))
+```
+
+Conclusion: *If we ignore the `wool` type*, there does appear to be a significant difference in the mean number of imperfections based on `tension` type. 
+
+The problem here is that by ignoring one of the variables, we lose the ability to detect differences (or statistical relationships) that may occur at a finer level. For instance, though the `wool` type alone seems to have no remarkable impact on the mean number of warp breaks, we cannot tell whether this would be the case if we just looked at `wool` types at one particular level of `tension`. 
+
+Instead, we investigate these kind of questions using two-way ANOVA. The following executes a two-way ANOVA for the warp breaks data based *only on the main effects* of the two factors:
+
+```{r}
+wb.anova <- aov(breaks~ wool + tension, data = warpbreaks)
+summary(wb.anova)
+```
+
+Looking at the formula in the `aov` command, specifying `wool + tension` to the right of the response variable and the `~` allows us to take both grouping variables into account at the same time. 
+
+The results reveal a small drop in the size of the p-values now attached to each factor. To interpret the results, we hold one factor constant - if we focus on just one type of wool, there is statistically significant evidence to suggest a difference in the mean number of warp breaks between the different `tension` levels. If we focuse on just one level of `tension`, the evidence of a difference considering the two `wool` types has increased a little but is still not statistically significant (using $\alpha=0.05$). 
+
+There's still a limitation with considering only main effects. While the previous analysis shows that there's variation in the response between the different levels of the two factors, it doesn't address the possibility that a difference in the mean number of warp breaks might vary further according to precisely *which* level of either `tension` or `wool` is being used when holding the other variable constant. This relatively subtle yet important consideration is known as an *interaction*. Specifically, if there is an interactive effect present between `tension` and `wool` with respect to warp breaks, then this would imply that the magnitude and/or direction of the difference in the mean number of warp breaks *is not the same* at different levels of the two factors. 
+
+To account for interactions, we make a slight adjustment to our formula in the two-way ANOVA model:
+
+```{r}
+wb.anova2 <- aov(breaks ~ wool + tension + wool:tension, data = warpbreaks)
+summary(wb.anova2)
+```
+
+We explicitly specify the interaction as the main effects model *plus* the notation `wool:tension`, where the two grouping variables are separated by a `:`. Note that the `:` operator in this context has nothing to do with the shortcut for creating an integer sequence vector. 
+
+We can see from the ANOVA table output that, statistically, there is evidence of an interactive effect; that is, the very nature of the difference in the means is dependent upon the factor levels themselves, even though that evidence is relatively weak. Of course, the p-value of about 0.021 tells us only that, overall, there might be an interaction but not the precise features of the interaction. 
+
+To help with this, we can interpret such a two-way interaction effect in more detail with an *interaction plot*:
+
+```{r}
+interaction.plot(x.factor = wb.means$tension, 
+                 trace.factor = wb.means$wool,
+                 response = wb.means$mean,
+                 trace.label = "wool",
+                 xlab = "tension",
+                 ylab = "mean warp breaks",
+                 col = c("red","blue"),
+                 lwd = c(2,2), 
+                 main = "Interaction plot for Warp Breaks")
+```
+
+When `interaction.plot` is called, the outcome means should be supplied to teh argument `response`, and the vectors providing the corresponding levels of each of the two factors should be supplied to `x.factor` (for the variable on the horizontal axis) and `trace.factor` (each level of which will produce a different line, referenced in an automatically produced legend, whose titles are passed to `trace.label`). It doesn't matter which grouping variable is which; the appearance of the plot will change accordingly, but your interpretation should be the same. 
+
+The two-way interaction plot displays the response on the vertical axis and splits the recorded means by the levels of the two grouping variables. This allows us to inspect the potential effect that varying the levels of the grouping variables has on the outcome. In general, when the lines (or segments thereof) are not parallel, it suggests and interaction could be present. Vertical separations between the plotted locations indicate the individual main effects of the grouping variables. 
+
+Consider the plot above, it does appear that the mean number of warp breaks for wool type `A` is higher if `tension` is low, but the nature of the difference changes if you move to a medium tension, where `B` has a higher point estimate than `A`. Moving to a high tension, type `A` again has a higher estimate of the mean number of breaks than `B`, though here the difference between `A` and `B` is nowhere near as big as it is at a low tension. Note that the plot does not display any kind of standard error measurements, so we must remember that all point estimates of the means are subject to variability. 
+
+### Post-Hoc Tukey HSD
+
+We can perform the Tukey Honest Significant Difference multiple comparisons tests too:
+
+```{r}
+TukeyHSD(wb.anova2)
+```
+
+What differences do we see?
+
+This confirms that we see a decreasing number of mean warpbreaks as tension increases. In addition, we see there isn't a significant difference in the wool type and the mean number of warpbreaks. Finally, Medium and High tension seem superior to Low tension though there's not a significant difference between Medium and High tension. The 95% confidence interval for the mean number of warpbreaks between Low and High tension is between -23.54187 and -5.902575 resulting in an average decrease of warpbreaks of about 24 to 6 on average.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

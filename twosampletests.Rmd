@@ -1,0 +1,209 @@
+---
+title: "Two-Sample Tests"
+author: "Thomas Robacker"
+date: "March 25, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+### Intoduction
+
+Often, testing a single sample isn't enough to answer the question you're interested in. In many settings, a researcher wants to directly compare a statistic between two distinct groups of measurements which boils down to a hypothesis test for the true difference between the values. We'll start by consider means. 
+
+The way in which two groups of data relate to each other affects the specific form of standard error for the difference between two sample means and therefore the test statistic itself. The actual comparison of the two means, however, is often of the same nature - the null hypothesis is usually dfined as $\mu_1$ and $\mu_2$ being equal. That is, there difference is zero. 
+
+### Unpaired/Independent Samples: Unpooled Variances
+
+The most general case is where the two sets of measurements are based on two independent, separate groups (also referred to as *unpaired* samples). If we *do not* assume the variances of the two populations are equal,$\sigma_1^2 \neq \sigma_2^2$, we perform the *unpooled* version of the two-sample $t$-test; we'll cover this first. If you can safely assume equal variances, $\sigma_1^2=\sigma_2^2$, then we perform a *pooled* two-sample $t$-test, which improves the precision of the results. 
+
+Let's consider an example. In an experiment to study the effect of ambient light on the growth of plants, researchers assigned tobacco seedlings at random to two groups of eight plants each. The plants were rown in a greenhouse under identical conditions except for lighting. The experimental group was grown under blue light, the control group under natural light. Here are the data on stem growth in mm in R:
+
+```{r}
+control <- c(4.3,4.2,3.9,4.1,4.1,4.2,3.8,4.1)
+experimental <- c(3.1,2.9,3.2,3.2,2.7,2.9,3.0,3.1)
+summary(control)
+summary(experimental)
+```
+
+Let the true mean growth of the control group be $\mu_1$ and the true mean growth of the experimental (blue light) group be $\mu_2$. We're interested in testing whether there is statistical evidence to support the claim that $\mu_1$ is greater than $\mu_2$. Thus the hypotheses are as follows:
+\[
+H_0: \ \mu_1-\mu_2=0 \\
+H_a: \ \mu_1-\mu_2>0
+\]
+
+Let's take a look at how to actually test these. For two independent samples, the standardized test statistic $T$ for testing the difference between $\mu_1$ and $\mu_2$, in that order, is given as
+\[
+T=\frac{\bar{x}_2-\bar{x}_1-\mu_0}{\sqrt{s_1^2/n_1+s_2^2/n_2}}
+\]
+whose distribution is approximated by a $t$-distribution with $\nu$ degrees of freedom, where
+\[
+\nu\approx \frac{(s_1^2/n_1+s_2^2/n_2)^2}{(s_1^2/n_1)^2/(n_1-1)+ (s_2^2/n_2)^2/(n_2-1)} 
+\]
+
+In the $T$ statistic above, $\mu_0$ is the null value of interest, which is typically zero. The denominator is the standard error of the difference between two means in this setting. 
+
+*Note: This two-sample t-test, using the formulas above, is called* Welch's $t$-test. *This refers to using the formula for $\nu$ above, called the* Welch-Satterthwaite equation. *Crucially, it assumes that the two samples have difference true variances, which is why it's called the* unpooled variance *version of the two-sample t-test*.
+
+Let's perform this hypothesis test in R:
+
+```{r}
+t.test(x=control, y=experimental, alternative = "g")
+```
+
+We see that with a P-value less than $\alpha=0.05$, we reject the null hypothesis. What's the contextual conclusion?
+
+We can generate a confidence interval for the true mean difference as well:
+```{r}
+
+```
+
+We should check for normality in these samples to ensure we can trust these results:
+
+```{r}
+
+```
+
+
+### Unpaired/Independent Samples: Pooled Variance
+
+In the unpooled variance example we just conducted, we assumed the variances between the two groups were unequal. This is an important note to make ecause it's leads to the use of our formulas for $T$ and $\nu$ previously. However, if we *can* assume the variances are equal, $\sigma_1^2=\sigma_2^2$, the precision of the test is improved - we use a different formula for teh standard error of the difference and for calculating the associated degress of freedom. 
+
+Again, the quantity of interest is the difference between two means, $\mu_1-\mu_2$. Assume we have two independent samples of sizes $n_1$ and $n_2$, assume that the relevant conditions for the $t$-distribution have been met (normality of the populations), and that $\sigma_1^2=\sigma_2^2$. 
+
+There is a simple rule of thumb to check the vailidity of the "equal variance" assumption. If the ratio of the larger sample standard deviation to the smaller sample standard deviation is less than 2, we may assume equal variances. That is, if, $s_1>s_2$, then if $\frac{s_1}{s_2}<2$, we can use the pooled variance test statistic that follows. (In fact, we can test for this more formally as we'll see later with ANOVA)
+
+The standardized test statistic $T$ for this situation is given as
+\[
+T=\frac{\bar{x}_2-\bar{x}_1-\mu_0}{\sqrt{s_p^2(1/n_1+1/n_2)}}
+\]
+whose distribution is a $t$-distribution with $\nu=n_1+n_2-2$ degrees of freedom, where
+\[
+s_p^2=\frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2} 
+\]
+is the *pooled estimate of the variance* of all the raw measurements. This is substituted in place of $s_1$ and $s_2$ in the denominator of the similiar formula for the unpooled variance situation. 
+
+For the previous example of tobacco seedlings, let's calculate the ratio of their standard deviations:
+```{r}
+sd(control)/sd(experimental)
+```
+
+Since this is less than 2, it's reasonable to assume equal variances between the two groups. To conduct a pooled two-sample $t$-test in R, we use the `t.test` function with the `var.equal=TRUE` argument, whose default value is `FALSE`. 
+
+```{r}
+
+```
+
+What differences do you observe between the two test versions?
+
+### Paired/Dependend Samples
+
+Let's look at comparing two means in *paired* data. This setting is distinctly different from the unpaired $t$-tests because it concerns the way the data have been collected. The issue concerns *dependence* between pairs of observations across the two groups of interest. 
+
+Paired data occur if the measurements forming the two sets of observations are recorded on the same individual(s) or if they are related in some other important or obvious way. A classical example of this is "before" and "after" observations, such as two measurements made on each person before and after some kind of intervention treatment. These situations still focus on the difference between the mean outcomes in each group, but rather than working with two data sets separately, a paired $t$-test works with a single mean: the true mean of the individual paired differences $\mu_d$. 
+
+As an example, consider a company interested in the efficacy of a drug designed to reduce resting heart rates in beats per minute (bpm). The resting heart rates of 16 individuals are measured. The individuals are then administered a course of the treatment, and their resting heart rates are again measured. Here are the data:
+
+```{r}
+rate.before<-c(52,66,89,87,89,72,66,65,49,62,70,52,75,63,65,61)
+rate.after<-c(51,66,71,73,70,68,60,51,40,57,65,53,64,56,60,59)
+```
+
+It quickly becomes clear why any test comparing these two groups must take dependence into account. Heart rate is affected by an individual's age, build, and level of physical fitness. Any true effect of the drug has the potential to be hidden if we approached the analysis using an unpaired test. 
+
+To overcome this, the paired two-sample $t$-test considers the difference between each pair of values. That is, the pair-wise difference, $d_i=y_i-x_i$. We do this easily with the `t.test` command. 
+
+We want to see how much the heart rate is reduced by the treatment, so the test we'll do has the following hypotheses:
+\[
+H_0:\ \mu_d=0\\
+H_a:\ \mu_d<0
+\]
+Given the order or subtraction used to obtain the differences, detection of a successful reduction in heart rate will be repsented by an "after" mean that is smaller than a "before" mean. In the `t.test` command, we specify `paired=TRUE`:
+
+```{r}
+t.test(x=rate.after, y=rate.before, alternative = "less", paired=TRUE)
+```
+
+What is our conclusion? We should check for normality in the differences, $\mu_d$ to be sure we can trust our t-test: check it. Find a 95% confidence interval for the true difference in the "before" and "after" groups.
+
+On some occasions, such as when our data strongly indicate non-normality, we may not be comfortable assuming the validity of the CLT. An alternative approach to the tests we've done so far is to employ a *non-parametric* technique that relaxes these distributional requirements. In the two-sample case, we could employ the *Mann-Whitney-U test* (also known as the *Wilcoxon rank-sum test*). This is a hypothesis test that compares two *medians*, as opposed to two means. Check out the command `wilcox.test` in the help files. 
+
+```{r}
+wilcox.test(x = rate.after, y = rate.before, paired = TRUE, alternative = "l", conf.int=T)
+```
+
+## Testing Proportions
+
+A focus on means is especially common in statistical modeling and hypothesis testing, and must also consider *sample proportions*, interpreted as the mean of a series of $n$ binary trials, in which the results are success (1) or failure (0). We'll focus on the parametric tests of proportions, which assume normality of the target sampling distributions (otherwise referred to as the $z$-scores).
+
+### Single Proportion
+
+You learned that the sampling distribution for a single proportion, $p$, becomes normally distributed by the CLT with mean $p$, and standard deviation $\sqrt{pq/n}$, provided the trials are independent and that $n$ isn't "too small" and $p$ isn't "too close" to 0 or 1. A rule of thumb to check these conditions involves checking that $n\hat{p}$ and $n\hat{q}$ are both greater than 10, where $\hat{p}$ is the sample proportion. 
+
+Consider our ingot cracking example from before. We learned how to conduct the test by hand, let's do it entirely in R. Recall, we have 400 new ingots cast as a random sample. In the sample we observed a cracking rate of $\hat{p}=0.17$ while the previous rate is $p=0.20$. We wish to test whether this new process yields a cracking rate lower than the previous one. We'll use the `prop.test` function in R. In order to do so, we need to know how many successes, $x$, we have in our sample of size $n$. 
+
+```{r}
+# Old rate
+p=0.20
+
+# Sample rate
+phat<-0.17
+n<-400
+
+# Sample successes
+successes <- 0.17*400
+successes
+```
+
+Note that we have more than 10 successes and failures, so it's reasonable to assume the sampling distribution becomes normally distributed. 
+
+```{r}
+prop.test(x=successes, n = n, p = p, alternative = "l", correct = FALSE)
+```
+
+The $P$-value is the same as we got by hand. Also, the $z$-score is the square root of the Chi-Square, $\chi^2$ statistic:
+```{r}
+-sqrt(2.25)
+```
+
+The Chi-Square statistic is always positive, so note that relative to the alternative hypothesis, we added the negative sign, which is consistent with our result by hand. 
+
+The `prop.test` function is a bit more sophisticated than just using a normal model, it uses a chi-square distribution for the sampling distribution of the statistic. In the case we meet our normality conditions, the chi-square distribtuion becomes approximately normal, just as the $t$-distribution becomes approximately normal for large sample sizes. This let's us use `prop.test` even when we don't necessarily meet the conditions for normality.
+
+Note that the confidence interval is different from a hand calculation. The CI produced by `prop.test` is referred to as the *Wilson-score interval*, which takes into account the direct association that a "probability of success" has with the binomial distribution. 
+
+Here's the 95% confidence interval, we just modify the argument for the alternative to `alternative="two.sided"`:
+
+```{r}
+prop.test(x=successes, n = n, p = p, alternative = "t", correct = FALSE)
+```
+
+### Two-Proportions
+
+As with the difference between two means, we're often testing whether two proportion are the same and thus have a difference of zero. For example, consider a group of students taking a statistics exam. In this group are $n_1=233$ students majoring in psychology, of whom $x_1=180$ pass, and $n_2=197$ students majoring in biology, of whom $175$ pass. Suppose it is claimed that the biology students have a higher pass rate in statistics than the psychology students. 
+
+Representing the true pass rates for psychology students as $p_1$ and biology students as $p_2$, this claim can be statistically tested using the following hypotheses:
+\[
+H_0:\ p_2-p_1=0\\
+H_1:\ p_2-p_1>0
+\]
+
+We can do this in R with the `prop.test` function where we pass a vector for both the successes and their respective sample sizes:
+
+```{r}
+x1<-180
+n1<-233
+x2<-175
+n2<-197
+
+prop.test(x = c(x2,x1), n = c(n2,n1), alternative = "g", correct = F)
+```
+
+What is our conclusion? Construct a 95% CI for the true difference.
+
+
+
+

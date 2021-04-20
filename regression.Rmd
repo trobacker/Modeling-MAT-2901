@@ -1,0 +1,332 @@
+---
+title: "Linear Regression and Inference"
+author: "Thomas Robacker - MAT 2901"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Introduction
+
+Linear regression models describe the effect that a particular variable, called the *explanatory variable*, might have on the value of a continuous outcome variable, called the *response variable*. The explanatory variable may be continuous, discrete, or categorical. For now, we'll concentrate on continuous explanatory variables and introduce statistical inference for simple linear models.   
+
+## Definition of the Model
+
+Assume you're looking to determine the value of response variable $Y$ given the value of an expalanatory variable $X$. The simple linear regression model stats that the value of a response is expressed as the following equation:
+
+\[
+Y|X = \beta_0 + \beta_1 X + \epsilon
+\]
+
+On the left hand side, the notation $Y|X$ reads as "the value of $Y$ conditional upon the value of $X$."
+
+### Residual Assumptions
+
+The validity of the conclusions one may draw based on the linear model is critically dependent on the assumptions made about $\epsilon$, which are defined as follows:
+
+* The value of $\epsilon$ is assumed to be normally distributed such that $\epsilon \sim N(0,\sigma)$.
+
+* That $\epsilon$ is centered (has a mean of) zero. 
+
+* The variance of $\epsilon$, $\sigma^2$, is constant (homogeneity of variance). 
+
+The $\epsilon$ term represents random error. In other words, we assume that any raw value of the response is owed to a linear change in a given value of $X$, plus or minus some random, *residual* variation or normally distributed *noise*. 
+
+## Parameters
+
+The value denoted by $\beta_0$ is called the *intercept* and $\beta_1$ is called the *slope*. Together they are referred to as the *regression coefficients* and are interpreted as follows:
+
+* The intercept, $\beta_0$, is the expected value of the response variable when the predictor ($X$) is zero. 
+
+* The slope, $\beta_1$ is the focus of interest in a linear model. It represents the change in the mean response for each one-unit increase in the predictor. 
+
+## Estimating the Intercept and Slope Parameters
+
+The goal is to use out data to estimate the regression parameters , yielding the estimates $\hat{\beta}_0$ and $\hat{\beta}_1$; this is referred to as *fitting* the linear model. In this case, the data comprise $n$ pairs of observations for each individual. The fitted model of interest concerns the mean response value, denoted $\hat{y}$, for a specific value of the predictor, $x$, and is written as follows:
+\[
+\hat{y} = \hat{\beta}_0 + \hat{\beta}_1 x
+\]
+
+Sometimes, we write $\mathbb{E}[Y]$ or $\mathbb{E}[Y|x=x]$ on the left side to emphasize the fact that the model gives the mean (expected value) of the response. We'll stick with $\hat{y}$ for now and see the meaning of the other notation when we discuss probability later. 
+
+Let our $n$ observation data pairs be denoted $x_i$ and $y_i$ for the predictor and response variables, respectively; $i=1,\ldots,n$. Then, the parameter estimates for the simple linear regression function are
+\[
+\hat{\beta}_1 = r\frac{s_y}{s_x} \qquad \hat{\beta}_0 = \bar{y}-\hat{\beta}_1
+\bar{x}
+\]
+
+where 
+
+* $\bar{x}$ and $\bar{y}$ are the sample means of the x and y variables. 
+
+* $s_x$ and $s_y$ are the sample standard deviations of the x and y variables. 
+
+* $r$ is the correlation coefficient between the x and y variables.
+
+The formulas above for estimating the model parameters is referred to as *least-squares regression*. 
+
+## Fitting Linear models with `lm`
+
+In R, the command `lm` performs the estimation for you. For example, here's the fitted linear model of the mean student height by handspan after cleaning the dataset a bit:
+
+```{r}
+library(MASS)
+#?survey
+head(survey)
+
+# Filter for obs which have either missing height or handspan
+incomplete.obs <- survey %>% 
+  filter(is.na(Height) | is.na(Wr.Hnd))
+
+head(incomplete.obs, 5)
+dim(incomplete.obs)
+
+#Make a df with no missing Height/Wt.Hnd:
+survey_complete <- survey %>%
+  filter(!is.na(Height) & !is.na(Wr.Hnd))
+```
+
+```{r}
+model <- lm(Height ~ Wr.Hnd, data = survey_complete)
+```
+
+The first argument is the familiar `response ~ predictor` formula. By specifying `data = survey` we didn't have to use the `$` operator to extract the columns. 
+
+The fitted linear model object itself has a special class in R, one of "lm" which is stored as *list*. If you simply enter the name of the "lm" object it will provide the basic output: a repeat of the call to `lm` we made and the estimates of the intercept and slope:
+
+```{r}
+model
+```
+
+
+This reveals that the linear model for this example is estimated as:
+\[
+\hat{y}= 113.954 + 3.117x
+\]
+
+This is the equation of a line. The y-intercept of 113.954 can be interpreted as saying the mean height of a student with a handspan of 0 cm is 113.954 cm (a not so useful statement). The slope tells us the change in the mean height for every 1 cm increase in handspan is estimated to increase by 3.117 cm. 
+
+We can verify the explicit solutions to the parameter estimates work too:
+```{r}
+slope <- cor(survey$Wr.Hnd, survey$Height, use = 'complete.obs')*sd(survey$Height, na.rm = T)/sd(survey$Wr.Hnd, na.rm = T)
+yint <- mean(survey$Height, na.rm = T)-slope*mean(survey$Wr.Hnd, na.rm = T)
+
+slope <- cor(survey_complete$Wr.Hnd, survey_complete$Height)*sd(survey_complete$Height)/sd(survey_complete$Wr.Hnd)
+yint <- mean(survey_complete$Height)-slope*mean(survey_complete$Wr.Hnd)
+
+
+slope
+yint
+
+```
+
+
+
+Let's plot the fitted line:
+
+```{r}
+## Base R version
+plot(survey_complete$Height ~ survey_complete$Wr.Hnd,
+     xlab = "Hand Width (Writing Hand)",
+     ylab = "Height (cm)")
+abline(reg = model, lwd = 2, col = "red")
+```
+
+We can also do this in `ggplot` with the layer `geom_smooth()`:
+
+```{r}
+## ggplot2 version
+ggplot(survey_complete, aes(x = Wr.Hnd, y = Height)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm', se = F, color = "red") +
+  labs(title = "Student Height vs. Writing Hand Width", 
+       x = "Hand Width (cm)",
+       y = "Height (cm)") + 
+  theme_minimal()
+```
+
+We used `geom_smooth(method = 'lm', se = F, color = "red")` to plot the regression line with the arguments `method = 'lm'` to plot the lease-squares regression line (loess by default), `se = F` to plot without a confidence interval band, and `color = red` to make the line red.
+
+## Illustrating Residuals
+
+Recall that we can examine the residuals for our model fit too. 
+
+```{r}
+#Store residuals and fitted values:
+diagnostic_df <- data.frame(residuals = resid(model), fit.value = fitted(model)) 
+
+ggplot(diagnostic_df, aes(x = fit.value, y = residuals)) + 
+  geom_point() +
+  theme_minimal() + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Residual Plot", x = "Fitted Value", y = "Residual")
+
+```
+
+Let's see how these plots relate to our theoretical assumptions we made earlier.
+
+```{r}
+ggplot(diagnostic_df, aes(x = residuals)) + 
+  geom_histogram(color = "dark grey", fill = "aquamarine4") + 
+  theme_minimal()
+
+ggplot(diagnostic_df, aes(x = residuals)) + 
+  geom_density(color = "dark grey", fill = "aquamarine4") + 
+  theme_minimal()
+
+```
+
+Looking at the density plot and histograms, it's reasonable to assume that the residuals, and hence the $\epsilon$ term, has a normal distribution centered around zero with some finite variance - test it! The standard deviation of the residuals is easy to find:
+
+```{r}
+summary(model)
+
+# Residual standard error
+summary(model)$sigma
+
+# Test for normality
+shapiro.test(diagnostic_df$residuals)
+
+```
+
+## Statistical Inference
+
+The estimation of a regression equation is relatively straightforward (with a computer) but this is merely the beginning. We should now think about what can be inferred from our result. In simple linear regression, there's a natural question we should ask: Is there statistical evidence to support the presence of a relationship between the predictor and the response? We investigate this following the same ideas we introduced for hypothesis testing before by thinking about the variability present in estimated statistics and continue to infer paramter values using confidence intervals. 
+
+This kind of *model-based inference* is automatically carried out by R when `lm` objects are processed. Using the `summary` function on an `lm` object provides us with many details. Here's the summary of our current working model:
+
+```{r}
+summary(model)
+```
+
+### Regression Coefficient Significance Tests
+
+Let's begin by focusing on the way the estimated coefficients are reported. The first column of the coefficients table contains the point estimates of the intercept and slope: it also includes the estimates of the standard errors of these statistics. It can be shown that simple linear regression coefficients, when estimated using least-squares, follow a $t$-distribution with $n-2$ degrees of freedom (where $n$ is the number of observations in the model fit). The standardized $t$ value and a P-value are reported for each parameter. These represent the results of a two-tailed hypothesis test formally defined as
+\[
+H_0: \beta_j=0\\
+H_a: \beta_j\neq 0
+\]
+where $j=0$ for the intercept and $j=1$ for the slope. 
+
+Focus on the row of results for the predictor (Wr.Hnd row). With a null value of zero, truth of $H_0$ implies that the predictor has no effect on the response. The claim here is interested in whether there is *any effect* of the covariate, not the direction of this effect, so $H_a$ is two-sided. With a very small P-value in this case, we conclude that there is strong evidence *against* the claim that the predictor has no effect on the mean level of the response. You can find this p-value directly, similar to the $t$-tests: $T= (3.116-0)/0.2888=10.79$.  
+
+The same test is carried out for the intercept, but the test for the slope parameter $\beta_1$ is typically more interesting, especially when the observed data don't include $x=0$, as is the case here. 
+
+From the output, we conclude that the fitted model suggests there is evidence that an increase in handspan is associated with an increase in height among the population being studied. For each additional centimeter of handspan, the average increase in height is approximately 3.12 cm. 
+
+We can also produce confidence intervals for our estimates. We could use our t-interval formulas from before but we'll let R to the heavy lifting:
+
+```{r}
+confint(model, level = 0.95)
+```
+
+We are 95% confident that the true value of $\beta_1$ lies between 2.55 and 3.69. The exclusion of the null value ($\beta_j=0$) reflects the statistically significant result from before. 
+
+## Other `summary` Output
+
+The "residual standard error" is the estimated standard error of the $\epsilon$ term, that is, the square root of the estimated variance of $\epsilon$, $\sigma^2$. Here $RSE = 7.91$. This is the same as `summary(model)$sigma`. The RSE is considered a measure of the *lack of fit* of the model to the data. The smaller the RSE the "better" the model fits. 
+
+The RSE provides an absolute measure of lack of fit, but since it is measured in the units of $Y$, it is not always clear what constitutes a good RSE. The output of `summary` also provides us with the `Multiple R-squared` and `Adjusted R-squared` values. They describe the proportion of variation in the response that can be attributed to the predictor. Our $R^2$ of about `36.1`% is interpreted as follows: About 36.1 percent of the variation in the student heights can be attributed to handspan. We'll come back to this in multiple regression.
+
+## Prediction
+
+Let's now look at using our fitted model for predictive purposes. The ability to fit a statistical model means that you not only can understand and quantify the nature of relationships in your data but also *predict* values of the outcome of interest, even where you haven't actually observed the values of any explanatory variable in the original data set. As with any statistic, there is always a need to accompany any point estimate or prediction with a meaasure spread.
+
+### Confidence Interval or Prediction Interval?
+
+With a fitted simple linear model we're able to calculate a point estimate of the *mean response* value, conditional upon the value of the explanatory variable ($x$). To do this, we simply substitute a value $x$ into the fitted model equation. A statistic like this is always subject to variation, so we can use a *confidence interval for the mean response (CI)* to guage this uncertainty. 
+
+A *prediction interval (PI)* for an observed response is different from the confidence interval in terms of context. Where CIs are used to describe the variability of the *mean* response, a PI is used to provide the possible range of values than an *individual realization* of the response variable might take, given $x$. This distinction is subtle but important: the CI corresponds to a mean, and the PI corresponds to an individual observation. 
+
+### Confidence Interval for Mean Response
+
+Let's say we want to determine the mean height for students with a handspan of 14.5 cm and for students with a handspan of 24 cm. The point estimate themselves are easy: just substitue the $x$ values into the regression equation:
+
+```{r}
+mycoefs <- coef(model)
+
+# Store in two objects
+beta0.hat <- mycoefs[1]
+beta1.hat <- mycoefs[2]
+
+as.numeric(beta0.hat+beta1.hat*14.5)
+as.numeric(beta0.hat+beta1.hat*24)
+```
+
+We can expect the mean heights to be around 159.14 and 188.75 cm for handspans 14.5 cm and 24cm, respectively. 
+
+To find CIs for these estimates, we could do them manually but R has a built-in `predict` command to do it for us. To use `predict`, we first need to store our $x$ values in a particular way: as a column in a new data frame. The name of the column must match the predictor used in the original call to create the fitted model object. In this example, we'll create a new data frame, `xvals`, with the column named `Wr.Hnd`, which contains only two values of interest:
+
+```{r}
+xvals <- data.frame(Wr.Hnd = c(14.5, 24))
+xvals
+```
+
+Now, when `predict` is called, we first pass the fitted model object of interest, then the data frame to predict upon, followed by the interval type, and confidence level. 
+
+```{r}
+mypred.ci <- predict(model, newdata = xvals, interval = "confidence", level = 0.95)
+mypred.ci
+```
+
+One interpretation: We are 95% confident that the mean height of a student with a handspan of 14.5 cm lies between 156.5 and 161.8 cm. 
+
+### Prediction Intervals for Individual Observations
+
+The `predict` function also provides prediction intervals. We simply set the `interval` argument to "`prediction`".  
+
+```{r}
+mypred.pi <- predict(model, newdata = xvals, interval = "prediction", level = 0.95)
+mypred.pi
+```
+
+Notice that the point estimates are the same while the widths are significantly larger than those of the corresponding CIs - this is because raw observations themselves at a specific $x$ value will naturally be more variable than their mean. 
+
+Interpretation changes accordingly. For instance, for a handspan of 14.5 cm, the model predicts indivdual observations to lie somewhere between 143.3 cm and 175.0 cm with a probability of 0.95. 
+
+### Plotting Intervals
+
+Both CIs and PIs are well suited to visualizations for simple linear regression models. 
+
+```{r}
+## ggplot2 version
+ggplot(survey_complete, aes(x = Wr.Hnd, y = Height)) + 
+  geom_point() + 
+  geom_smooth(color = "red", se = T, level = 0.95) +
+  labs(title = "Student Height vs. Writing Hand Width", 
+       x = "Hand Width (cm)",
+       y = "Height (cm)") + 
+  theme_minimal()
+```
+
+Within `geom_smooth()` can plot the CIs by setting `se = T` and specify the confidence level with `level`. You must be sure that the method is specifed as a linear model: `method = 'lm'`. 
+
+We can add the prediction interval with a little code:
+
+```{r}
+# Create prediction intervals
+temp_var <- predict(model, interval = "prediction")
+
+new_df <- cbind(survey_complete, temp_var)
+
+
+ggplot(new_df, aes(x = Wr.Hnd, y = Height)) + 
+  geom_point() + 
+  geom_line(aes(y=lwr), color = "blue ", linetype = "dashed") +
+  geom_line(aes(y=upr), color = "blue", linetype = "dashed") +
+  geom_smooth(method = 'lm',color = "red", se = T, level = 0.95) +
+  labs(title = "Student Height vs. Writing Hand Width", 
+       x = "Hand Width (cm)",
+       y = "Height (cm)") + 
+  theme_minimal()
+```
+
+
+
+
+
+
+

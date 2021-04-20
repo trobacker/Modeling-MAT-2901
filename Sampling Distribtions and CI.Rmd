@@ -1,0 +1,157 @@
+---
+title: "Sampling Distributions"
+author: "Thomas Robacker"
+date: "March 9, 2021"
+#css: styles.css
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+
+In this section, we'll consider sample statistics themselves as random variables to introduce the concept of a *sampling distribution* - a probability distribution that is used to account for the variability naturally present when you estimate population parameters using sample statistics. We'll then see how this relates to the idea of a *confidence interval*, which is a direct reflection of the variability in a sampling distribution used to obtain an intervel estimate of a population parameter. 
+
+## Sampling Distributions
+
+A sampling distribution is like any other probability distribution but it is associated with a random variable that is a sample statistic. In the last section, when talking about the distributions we covered, we knew the parameters for the model - e.g. we were given the mean and standard deviation of a normal model. In practice, these kinds of quantities are often unknown and we desire to estimate them, a process we call *parameter estimation*. Any statistic estimated from a sample can be treated as a random variable, the estimate itself is a realization of that random variable. With the sampling distrubtion we can model the natural variation that's inherent in estimated sample statistics which is a key part of many statistical analyses. 
+
+The center of the sampling distribution is its mean and the standard deviation of a sampling distribution is referred to as a *standard error*. The slight change in terminology reflects the fact that the probabilities of interest are no longer tied to raw measurements or observations per se, but rather to a quantity calculated from a *sample* of observations. We're going to focus for now on two statistics: a single *sample mean* and a single *sample proportion*.
+
+## Distribution for a Sample Mean
+
+The arithmetic mean is arguably the most common measure of centrality used when summarizing a data set. The conditions for finding the probability distribution of a sample mean vary depending on whether you know the value of the standard deviation. We enote the random variable of interest as $\bar{X}$. This represents the mean of a sample of $n$ observations from the "raw observation" random variable $X$. So, the true mean and standard deviation of this population are labeled $\mu_X$ and $\sigma_X$, respectively.
+
+### Situation 1: Standard Deviation Known ($\sigma$ Known)
+
+When the true value of the standard deviation $\sigma$ is known, then the following are true:
+
+* If $X$ itself is normal, the sampling distrbiution of $\bar{X}$ is a normal distribution, with mean $\mu_X$ and standard error $\sigma_X/\sqrt{n}$ often denoted $SE(\bar{x})$. 
+
+* If $X$ is not normal, the sampling distribution of $\bar{X}$ is still approximately normal, with mean $\mu_X$ and standard error $SE(\bar{x})=\sigma_X/\sqrt{n}$, and this approximation improves arbitrarily as $n\rightarrow \infty$. This is known as the *central limit theorem* (CLT). 
+
+### Situation 2: Standard Deviation Unknown ($\sigma$ Unknown)
+
+In practice, you won't usually know the true standard deviation value of the raw measurement distribution that generated your sample data.So, we replace $\sigma_X$ with $s_X$, the standard deviation of the sample data. However, this substitution introduces additional variability that affects the distribution associated with the sample mean random variable. 
+
+* Standardized values of the sampling distribution of $\bar{X}$ follow a $t$-distribution with $\nu = n-1$ degrees of freedom; standardization is performed using the standard error $SE(\bar{x})=s_X/\sqrt{n}$ (i.e. find the $t$-score). 
+
+* If, additionally, $n$ is small, then it is necessary to assume the distribution of $X$ is normal for the validity of this $t$-based sampling distribution of $\bar{X}$. 
+
+The nature of the sampling distribution of $\bar{X}$ therefore depends upon whether $\sigma_X$ is known, as well as the sample size $n$. The CLT states that normality occures even if the raw observation distribution is itself not normal, but this approximation is less reliable if $n$ is small. It's a common rule of thumb to rely on the CLT only if $n\geq 30$. If $s_X$ is used to calculate the stand error of $\bar{X}$, then the sampling distribution is the $t$-distribution and reliable only if $n\geq 30$.
+
+
+
+### Example: Dunedin Temperatures
+
+Suppose the daily maximum temperature in the month of January in Dunedin, New Zealand, follows a normal distribution, with a mean of 22 degrees Celsius and a standard deviation of 1.5 degrees: $X\sim N(22,1.5)$. Then, with $\sigma_X = 1.5$ known, in line with situation 1, for samples of size $n=5$, the sampling distribution of $\bar{X}$ will be normal: $N(\mu_x,\sigma_X/\sqrt{n})=N(22,1.5/ \sqrt{5}) = N(22,0.671)$.
+
+The graphs of the population (raw obsveration distribution) and the sampling distribution for the sample mean are shown here:
+
+```{r fig.align="center"}
+xvals <- seq(16,28,by=0.1)
+fx.samp <- dnorm(xvals, 22, 1.5/sqrt(5))
+plot(xvals, fx.samp, type="l", lty=2, lwd=2, xlab="", ylab="", col = "darkgreen")
+abline(h=0, col="gray")
+fx <- dnorm(xvals, 22, 1.5)
+lines(xvals, fx, lwd=2, col = "blue")
+legend("topright", legend=c("raw obs dist.", "sampling dist. (mean)"),col = c("blue","darkgreen"), lty=1:2, lwd=c(2,2),bty="n")
+```
+
+In this example, the sampling distribution of $\bar{X}$ is clearly taller, skinnier normal distribution than the one tied to the population. This makes sense: we expect less variation in an *average* of several measurements as opposed to the raw, individual measurements. Furthermore, the presence of $n$ in the denominator of the standard error dictates a more precise distribution around the mean if we increase the sample size . 
+
+We can now ask various probability questions. For example lets find the probability that a randomly chosen day in January has a maximum temperature of less than 21.5 degrees, $P(X<21.5)$:
+
+```{r}
+pnorm(21.5, mean=22, sd=1.5)
+```
+
+Now lets find the probability that the sample mean will be less than 21.5 degrees for a sample of size 5, $P(\bar{X}<21.5)$:
+
+```{r}
+pnorm(21.5, mean=22, sd=1.5/sqrt(5))
+```
+
+These probabilites are illustrated on the graphs below:
+
+```{r fig.align="center"}
+plot(xvals, fx.samp, type="l", lty=2, lwd=2, xlab="", ylab="")
+
+xvals.sub <- xvals[xvals<=21.5]
+fx.sub <-fx[xvals<=21.5]
+fx.samp.sub <- fx.samp[xvals<=21.5]
+abline(v=21.5,col = "gray")
+polygon(cbind(c(21.5,xvals.sub),c(0,fx.sub)),density=10)
+polygon(cbind(c(21.5,xvals.sub),c(0,fx.samp.sub)),density=10,
+        angle = 120, lty=2)
+
+```
+
+To evaluate the probabilities, notice that we required knowledge of the parameters governing $X$ (mu and sigma). In practice, we rarely have these quantities, instead, we obtain a sample of data and calculate summary statistics. 
+
+Let's produce five randomly generated Dunedin temperatures from the $X\sim N(22, 1.5)$ distribution:
+
+```{r}
+set.seed(16)
+sample<- rnorm(5,mean=22, sd=1.5)
+sample
+```
+
+Now, suppose these fives values constitute all the data we have about the temperatures, that is, pretend we don't know that $\mu_X=22$ and $\sigma_X=1.5$. Our best guesses of the true values $\mu_X$ and $\sigma_X$ denoted $\bar{x}$ and $s$, respectively, are therefore as follows:
+```{r}
+sample.mean <- mean(sample)
+sample.mean
+
+sample.sd <- sd(sample)
+sample.sd
+
+
+```
+
+ The estimated *standard error* is then:
+ 
+```{r}
+sample.se <- sample.sd/sqrt(5)
+sample.se
+```
+ 
+Because $n=5$ is relatively small, we must assume the values in `sample` are realizations from a normal distribution, in line with the points made for situation 2 above. This allows us to handle the sampling distribution of $\xbar{X}$ using the $t$-distribution with 4 degrees of freedom. 
+
+The $t$-distribution looks a lot like the standard normal distribution: it's bell-shaped, symmetric, and unimodil, and it's centered at zero. The difference is that while a normal distribution is typically used to deal with a population, the $t$-distribution deals with a *sample* from a population, as we have here. 
+
+A $t$-distribution is determined by one parameter: $\nu$ which is referred to as the *degrees of freedom* (df), called so because it represents the number of individual components in the calculation of a given statistics that are "free to change." This quantity is directly related to the sample size. In this case, using the sample mean, the degrees of freedom are $df=n-1=5-1=4$. 
+
+So, to find the probability that the mean temperature (in a sample of five days) is less than 21.5 based on our calculated sample statistic, we must first standardize this value as we did for the normal models. Label the corresponding random variable $T$ and the specific value as $t_4$ and calculate the $t$-score:
+\[
+t_4 = \frac{x-\bar{x}}{SE(\bar{x})}\approx\frac{21.5-22.345}{0.718}\approx -1.177
+\]
+or more precisely:
+```{r}
+t4<- (21.5-sample.mean)/sample.se
+t4
+```
+
+This has placed the value of interest, 21.5, on the standarized scale, making it interpretable with respect to the $t$ distribution with 4 degrees of freedom. That is, we can think of the value of 21.5 degrees Celsius being about 1.177 standard errors below, because it's negative, the sample mean of 22.345.
+
+The estimated probability we would see a sample mean below 21.5 is:
+
+```{r}
+pt(t4,df=4)
+```
+
+Note that when we calculated the "true" theoretical probability from the sampling distribution of $P(\bar{X}<21.5)$, we got about 0.23, but the same probability based on standardization using sample statistics of the data `sample` (in other words, *estimates* of the true theoretical values $P(T<t_4)$) has been computed as about 0.15.
+ 
+Below we plot the $t$-distribution with $\nu = 4$ degrees of freedom marking off the probability described. The $N(0,1)$ distribution is also plotted for comparison; this represents the standardized version of the $N(22, 1.5/\sqrt{5})$ sampling distribution from earlier, in situation 1. 
+```{r}
+xvals <- seq(-5,5,length=100)
+fx.samp.t <- dt(xvals,df=4)
+plot(xvals,dnorm(xvals),type="l",lty=2,lwd=2,col="blue",xlim=c(-4,4),xlab="",ylab="")
+abline(h=0,col="gray")
+lines(xvals,fx.samp.t,lty=3,lwd=2, col = "red")
+polygon(cbind(c(t4,-5,xvals[xvals<=t4]),c(0,0,fx.samp.t[xvals<=t4])),density=10,lty=3)
+legend("topright", legend=c("N(0,1) standard","t dist (4 df)"),col=c("blue","red"),lty=2:3,lwd=c(2,2),bty="n")
+```
+
+Consideration of probability distributions associated with sample means is clearly not a trivial exercise. using sample statistics governs the nature of the sampling distribution; in particular, it will be $t$ based fi we use the sample standard deviation to calculate the standard error. However, with a computer, these various probability calculations are straigthforward to find.

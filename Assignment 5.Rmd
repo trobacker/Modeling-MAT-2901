@@ -1,0 +1,36 @@
+---
+title: "Assignment 5"
+author: "Your Name"
+date: "February 23, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(MASS)
+```
+ 
+## The Boston Housing Dataset
+
+In the setup R chunk above, we've already loaded the `tidyverse` and `MASS` package. `MASS` contains a very large collection of data sets and functions. Now that `MASS` is loaded, familiarize yourself with the `Boston` data set which records various housing variables for 506 neighborhoods around Boston, MA. You might recognize this from the ISLR reading.
+
+1. Using the `Boston` dataset, plot the `medv` variable versus the `lstat` variable using ggplot.
+
+2. What do the variables in the graph for number 1 represent? Describe the relationship you see (four things: association, form, strength of the form, potential outliers). 
+
+3. Fit a linear model for the response `medv` based on the predictor `lstat`. 
+
+4. Plot the regression line on your plot from number 1.
+
+5. Print the summary of the linear model using `summary` and interpret the coefficients of your model. 
+
+6. What is the correlation coefficient? What is the $R^2$ value for your model? Interpret them. 
+
+7. Do you believe a linear model is appropriate here? (*hint: not entirely*)
+
+8. Plot the residuals versus the fitted values from your regression model. 
+
+9. Plot a histogram and density plot of your residuals. 
+
+10. Based on the plots from numbers 8 and 9, describe any violations of the residual assumptions for a linear regression model (this is where you'll learn the linear model is not the whole story)
